@@ -18,7 +18,7 @@
   "expectedClaimCount": 37,
   "releaseSurface": {
     "algorithm": "sha256",
-    "sourceCommit": "fc04bea2979b1487614db18ee37ac0f344600836",
+    "sourceCommit": "d4f94c468bd22bcb9fdbf1b07959ccf3ea8f5e26",
     "pathSetSha256": "0b994c355e0e1a7ac8f6d319a722c67ac870b5c4e2cc14960358a92d6302e9ce",
     "files": [
       {
@@ -1088,8 +1088,8 @@
       },
       {
         "path": "frontend/app/secondbrain.js",
-        "bytes": 37434,
-        "sha256": "68f52a3aa142cbb1723d08275486b844c6b61cce7279f6301e3b91c1f0057df2"
+        "bytes": 37371,
+        "sha256": "38baa4941974f9b570d5fe5751d01eaef1e4962b0679fa23fba8456ec472b247"
       },
       {
         "path": "frontend/app/seedcredit.js",
