@@ -230,6 +230,10 @@ const { makeStationInspectTool } = require('./tools/builtin/station-inspect.js')
 const { makeManualReadTool } = require('./tools/builtin/manual-read.js');   // manual.read — the operator manual's reference sections, on demand
 const { makeStationShowTool } = require('./tools/builtin/station-show.js');   // station.show — the agent opens a StarNet window/tab for the Commander (frontend/app/places.js)
 const memcore = require('./memcore.js');
+const SecondBrain = require('./secondbrain.js');            // the second brain: one graph over every agent's notebook (pure)
+const SecondBrainVault = require('./secondbrain-vault.js');  // the second brain on disk: Obsidian vault + .base views + graph.json
+const BrainSources = require('./brain-sources.js');          // graphify graph.json + basemode .base/graph.nq, folded into the same brain (pure)
+const SecondBrainReflect = require('./secondbrain-reflect.js'); // the station-wide reflection pass: proposals that ride the existing Keep/Edit/Discard deck (pure)
 const { makeConsentBroker } = require('./permissions.js');
 const { makeGrantManager } = require('./permgrants.js');
 const { makeProjectsStore } = require('./projects-store.js');   // NS-5: known-projects (blessed roots) durable store
@@ -12021,6 +12025,15 @@ const ROUTES = [
   { m: 'POST', exact: '/api/memory/forget', h: handleMemoryForget },
   { m: 'GET', exact: '/api/memory/config', h: handleMemoryConfigGet },   // P1-10 memory controls
   { m: 'POST', exact: '/api/memory/config', h: handleMemoryConfigSet },
+  // SECOND BRAIN — one graph over every agent's notebook (live console view) + the Obsidian vault export
+  { m: 'GET', exact: '/api/secondbrain/graph', h: handleSecondBrainGraph },
+  { m: 'POST', exact: '/api/secondbrain/recall', h: handleSecondBrainRecall },
+  { m: 'GET', exact: '/api/secondbrain/vault', h: handleSecondBrainVaultInfo },
+  { m: 'POST', exact: '/api/secondbrain/export', h: handleSecondBrainExport },
+  { m: 'GET', exact: '/api/secondbrain/sources', h: handleSecondBrainSources },
+  { m: 'POST', exact: '/api/secondbrain/ingest', h: handleSecondBrainIngest },
+  { m: 'POST', exact: '/api/secondbrain/sources/clear', h: handleSecondBrainSourcesClear },
+  { m: 'POST', exact: '/api/secondbrain/reflect', h: handleSecondBrainReflect },
   { m: 'GET', qrx: /^\/shared\//, h: serveShared }
 ];
 
@@ -27776,6 +27789,272 @@ function serveMemoryRecords(req, res) {
     const records = Array.isArray(raw) ? raw.map(r => redact(memcore.projectRecord(r, nowMs))) : [];
     json(200, { agentId: agent, records });
   } catch (e) { json(500, readRouteFailure('memory.records', e)); }
+}
+
+/* ---- SECOND BRAIN ------------------------------------------------------------------------------------
+   One graph over EVERY agent's notebook, plus an export of that graph as an Obsidian vault. The notebooks
+   themselves stay the source of truth (this layer only reads them): the graph is rebuilt on every request, so
+   it can never drift from what the agents actually believe. Two things use it — the BRAIN console section
+   (station-wide, live) and the export, which writes Markdown + .base views the Commander can open in Obsidian
+   and that any other AI CLI (graphify included) can read. */
+
+// Every agent that has a notebook on disk, plus every agent the live roster knows about (a summoned crew member
+// whose first belief has not landed yet still belongs on the map). Sorted for a deterministic graph.
+function brainAgentIds() {
+  const ids = new Set();
+  for (const id of agentRoster.keys()) ids.add(id);
+  try {
+    for (const f of fs.readdirSync(WORKSPACES)) {
+      const m = /\.notebook\.json$/.exec(f);
+      if (m) ids.add(f.slice(0, -'.notebook.json'.length));
+    }
+  } catch (e) { failNote('secondbrain.scan', e); }
+  return [...ids].filter(id => /^[A-Za-z0-9_-]{1,40}$/.test(id)).sort();
+}
+
+function readBrainStores() {
+  const ids = brainAgentIds();
+  const notebooks = {};
+  const embeddings = {};
+  const records = {};
+  for (const id of ids) {
+    let raw = null;
+    try { const rk = notebookStore.readKey('notebook:' + id); raw = rk && Array.isArray(rk.value) ? rk.value : []; }
+    catch (e) { failNote('secondbrain.notebook', e); raw = []; }
+    notebooks[id] = raw;
+    for (let i = 0; i < raw.length; i++) {
+      const rec = SecondBrain.normalizeRecord(id, raw[i], i);
+      if (rec) records[rec.uid] = rec;
+    }
+    try {
+      const ev = notebookStore.readKey('embed:' + id);
+      if (ev && ev.value && ev.value.items) embeddings[id] = ev.value;
+    } catch (e) { failNote('secondbrain.embed', e); }
+  }
+  const roster = ids.map(id => {
+    const a = agentRoster.get(id);
+    return { agentId: id, name: (a && a.name) || id, color: (a && a.color) || null };
+  });
+  return { ids: ids, notebooks: notebooks, embeddings: embeddings, records: records, roster: roster };
+}
+
+/* ---- imported knowledge graphs (graphify + basemode) ----
+   Optional amplifiers, never dependencies: the app works with neither installed. We only ever read the two
+   files those tools actually produce, at the two names they actually use — accepting an arbitrary path here
+   would turn an ingest route into a file-read oracle for anything holding the API token. */
+const BRAIN_SOURCES_FILE = path.join(WORKSPACES, 'second-brain.sources.json');
+const BRAIN_SOURCE_MAX_BYTES = 8 * 1024 * 1024;   // an 8MB graph.json is already a very large repo
+function readBrainSources() {
+  try {
+    const raw = fs.readFileSync(BRAIN_SOURCES_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    const src = parsed && parsed.sources && typeof parsed.sources === 'object' ? parsed.sources : {};
+    const out = [];
+    for (const k of Object.keys(src)) {
+      const s = src[k];
+      if (!s) continue;
+      // basemode calls its list `records`, graphify calls it `nodes` — normalise on the way in so every consumer
+      // (graph, export, the SOURCES readout) sees one shape. Reading only `.nodes` silently dropped basemode.
+      const nodes = Array.isArray(s.nodes) ? s.nodes : (Array.isArray(s.records) ? s.records : null);
+      if (!nodes) continue;
+      out.push({ source: s.source || k, nodes: nodes, edges: Array.isArray(s.edges) ? s.edges : [], importedAt: s.importedAt || null, path: s.path || null, version: s.version || null });
+    }
+    return out;
+  } catch (_) { return []; }
+}
+function writeBrainSources(list) {
+  const sources = {};
+  for (const s of (Array.isArray(list) ? list : [])) {
+    if (!s || !s.source) continue;
+    const nodes = Array.isArray(s.nodes) ? s.nodes : (Array.isArray(s.records) ? s.records : []);
+    sources[s.source] = { source: s.source, nodes: nodes, edges: Array.isArray(s.edges) ? s.edges : [], importedAt: s.importedAt || Date.now(), path: s.path || null, version: s.version || null };
+  }
+  // same crash-safe atomic+fsync writer the protected stores use (deps first: { fs, path }, then file, then data)
+  writeFileDurableRaw({ fs: fs, path: path }, BRAIN_SOURCES_FILE, JSON.stringify({ version: 1, updatedAt: Date.now(), sources }, null, 2));
+  return sources;
+}
+// Where each tool leaves its graph. A directory is accepted for convenience, but the FILE name is fixed.
+function locateBrainSource(kind, input) {
+  const p = path.resolve(String(input || ''));
+  let st = null;
+  try { st = fs.statSync(p); } catch (_) { return { error: 'no such path' }; }
+  if (st.isDirectory()) {
+    const candidates = kind === 'graphify'
+      ? [path.join(p, 'graphify-out', 'graph.json'), path.join(p, 'graph.json')]
+      : [path.join(p, '.base', 'graph.nq'), path.join(p, 'graph.nq')];
+    for (const c of candidates) { try { if (fs.statSync(c).isFile()) return { file: c }; } catch (_) {} }
+    return { error: 'no ' + (kind === 'graphify' ? 'graphify-out/graph.json' : '.base/graph.nq') + ' under ' + p };
+  }
+  const base = path.basename(p).toLowerCase();
+  if (kind === 'graphify' && base !== 'graph.json') return { error: 'expected a graphify graph.json' };
+  if (kind === 'base' && base !== 'graph.nq') return { error: 'expected a basemode graph.nq' };
+  if (st.size > BRAIN_SOURCE_MAX_BYTES) return { error: 'file too large (' + st.size + ' bytes)' };
+  return { file: p };
+}
+
+function brainGraphNow() {
+  const store = readBrainStores();
+  const graph = SecondBrain.buildGraph({
+    agents: store.roster, notebooks: store.notebooks, embeddings: store.embeddings,
+    sources: readBrainSources(), now: Date.now()
+  });
+  graph.records = store.records;
+  return graph;
+}
+
+// GET /api/secondbrain/graph — the whole station's memory as nodes + edges + stats (read-only)
+function handleSecondBrainGraph(req, res) {
+  try {
+    const g = brainGraphNow();
+    const records = g.records;
+    delete g.records;
+    respondJson(res, 200, { ok: true, graph: g, records: records });
+  } catch (e) { respondJson(res, 500, readRouteFailure('secondbrain.graph', e)); }
+}
+
+// POST /api/secondbrain/recall { text, k } — which beliefs WOULD surface for a piece of text. The live view uses
+// this to draw recall as a travelled path (the belief nodes light up) instead of an opaque spinner.
+async function handleSecondBrainRecall(req, res) {
+  let b;
+  try { b = JSON.parse(await readBody(req, 256 * 1024) || '{}') || {}; }
+  catch (_) { return respondJson(res, 400, { ok: false, error: 'bad json' }); }
+  try {
+    const g = brainGraphNow();
+    const records = g.records;
+    delete g.records;
+    // records go to the probe so it searches each belief's FULL body, not the truncated label the graph node holds
+    respondJson(res, 200, { ok: true, hits: SecondBrain.recallPulse(g, String(b.text || ''), { k: b.k || 8, records: records }) });
+  } catch (e) { respondJson(res, 500, readRouteFailure('secondbrain.recall', e)); }
+}
+
+// The vault lives somewhere the Commander can open in Obsidian. A path supplied by a caller is only honoured when
+// it stays inside the Commander's own Documents folder or the station workspace — this route writes files, so an
+// agent holding the API token must not be able to aim it at an arbitrary directory (C:\Windows, a startup folder).
+const BRAIN_VAULT_ENV = String(process.env.AGENT_OS_BRAIN_VAULT == null ? '' : process.env.AGENT_OS_BRAIN_VAULT).trim();
+const BRAIN_VAULT_DEFAULT = path.resolve(BRAIN_VAULT_ENV || path.join(os.homedir(), 'Documents', 'Agent OS Brain'));
+function safeBrainVaultRoot(requested) {
+  if (BRAIN_VAULT_ENV) return path.resolve(BRAIN_VAULT_ENV);
+  const fallback = BRAIN_VAULT_DEFAULT;
+  const candidate = requested ? path.resolve(String(requested)) : fallback;
+  const ok = [path.join(os.homedir(), 'Documents'), path.join(os.homedir(), 'OneDrive'), WORKSPACES]
+    .some(base => { const b = path.resolve(base); return candidate === b || candidate.indexOf(b + path.sep) === 0; });
+  return ok ? candidate : fallback;
+}
+
+// GET /api/secondbrain/sources — which external graphs are folded in, and what they contributed
+function handleSecondBrainSources(req, res) {
+  const list = readBrainSources();
+  respondJson(res, 200, { ok: true, sources: list.map(s => ({ source: s.source, nodes: (s.nodes || []).length, edges: (s.edges || []).length, importedAt: s.importedAt || null, path: s.path || null })) });
+}
+
+// POST /api/secondbrain/ingest { kind: 'graphify'|'base', path } — fold one external graph into the brain.
+// Read-only on the source: we parse it and store the parsed nodes/edges, never touch the file itself.
+async function handleSecondBrainIngest(req, res) {
+  let b;
+  try { b = JSON.parse(await readBody(req, 16 * 1024) || '{}') || {}; }
+  catch (_) { return respondJson(res, 400, { ok: false, error: 'bad json' }); }
+  const kind = String(b.kind || '');
+  if (kind !== 'graphify' && kind !== 'base') return respondJson(res, 400, { ok: false, error: 'kind must be graphify or base' });
+  const loc = locateBrainSource(kind, b.path);
+  if (loc.error) return respondJson(res, 400, { ok: false, error: loc.error });
+  let parsed;
+  try {
+    const text = fs.readFileSync(loc.file, 'utf8');
+    parsed = kind === 'graphify' ? BrainSources.parseGraphify(text) : BrainSources.parseBaseNQuads(text);
+  } catch (e) { return respondJson(res, 500, readRouteFailure('secondbrain.ingest', e)); }
+  if (!parsed.ok) return respondJson(res, 400, { ok: false, error: parsed.error || 'could not parse ' + loc.file });
+  parsed.importedAt = Date.now();
+  parsed.path = loc.file;
+  const list = readBrainSources().filter(s => s.source !== kind);
+  list.push(parsed);
+  writeBrainSources(list);
+  respondJson(res, 200, {
+    ok: true, source: kind, path: loc.file,
+    nodes: (parsed.nodes || parsed.records || []).length,
+    edges: (parsed.edges || []).length,
+    version: parsed.version || null
+  });
+}
+
+// POST /api/secondbrain/sources/clear { kind? } — forget one imported graph (or all of them)
+async function handleSecondBrainSourcesClear(req, res) {
+  let b = {};
+  try { const raw = await readBody(req, 4096); b = raw ? (JSON.parse(raw) || {}) : {}; } catch (_) {}
+  const kind = b && b.kind ? String(b.kind) : '';
+  const list = kind ? readBrainSources().filter(s => s.source !== kind) : [];
+  writeBrainSources(list);
+  respondJson(res, 200, { ok: true, remaining: list.length });
+}
+
+/* POST /api/secondbrain/reflect — the AUTO-IMPROVING pass, station-wide.
+   Turns cross-agent patterns into ordinary proposals so they ride the SAME Keep/Edit/Discard deck and the same
+   trust mechanics as a run's own reflection. Nothing is written: a proposal is a suggestion until the Commander
+   answers it. Declined beliefs are filtered here (discard = never again, and not just inside one notebook). */
+let brainReflecting = false;
+async function handleSecondBrainReflect(req, res) {
+  if (brainReflecting) return respondJson(res, 409, { ok: false, error: 'a reflection pass is already running' });
+  let b = {};
+  try { const raw = await readBody(req, 4096); b = raw ? (JSON.parse(raw) || {}) : {}; } catch (_) {}
+  brainReflecting = true;
+  try {
+    const store = readBrainStores();
+    const graph = SecondBrain.buildGraph({ agents: store.roster, notebooks: store.notebooks, embeddings: store.embeddings, sources: readBrainSources(), now: Date.now() });
+    const declined = {};
+    for (const id of store.ids) {
+      try { const d = notebookStore.get('declined:' + id); if (Array.isArray(d)) declined[id] = d; } catch (_) {}
+    }
+    const now = Date.now();
+    const only = b.agentId ? String(b.agentId) : null;
+    const plan = SecondBrainReflect.propose(graph, { now: now, records: store.records, declined: declined })
+      .filter(p => !only || p.agentId === only);
+    const runId = 'sb-' + now;
+    const staged = [];
+    for (const entry of plan) {
+      try {
+        stashProposals(entry.agentId, runId, entry.proposals);
+        await queuePending(entry.agentId, runId, entry.proposals);
+        for (const p of entry.proposals) {
+          chanEmit('memory.proposed', { agentId: entry.agentId, runId: runId, id: p.id, kind: p.kind, scope: p.scope || 'global' });
+        }
+        staged.push({ agentId: entry.agentId, proposals: entry.proposals.length, kinds: entry.proposals.map(p => p.reason || 'proposal') });
+      } catch (e) { failNote('secondbrain.reflect.stage', e); }
+    }
+    respondJson(res, 200, { ok: true, runId: runId, total: staged.reduce((n, s) => n + s.proposals, 0), staged: staged });
+  } catch (e) {
+    respondJson(res, 500, readRouteFailure('secondbrain.reflect', e));
+  } finally { brainReflecting = false; }
+}
+
+// GET /api/secondbrain/vault — where the vault would be written + the last export's outcome
+function handleSecondBrainVaultInfo(req, res) {
+  respondJson(res, 200, { ok: true, root: BRAIN_VAULT_DEFAULT, lastExport: brainLastExport });
+}
+
+// POST /api/secondbrain/export { path? } — write the whole brain out as an Obsidian vault. Idempotent: the same
+// beliefs rewrite the same files. Serialised, because two concurrent exports would interleave their writes.
+let brainExporting = null;
+let brainLastExport = null;
+async function handleSecondBrainExport(req, res) {
+  let b = {};
+  try { const raw = await readBody(req, 16 * 1024); b = raw ? (JSON.parse(raw) || {}) : {}; }
+  catch (_) { return respondJson(res, 400, { ok: false, error: 'bad json' }); }
+  if (brainExporting) return respondJson(res, 409, { ok: false, error: 'an export is already running' });
+  brainExporting = (async () => {
+    const g = brainGraphNow();
+    const records = g.records;
+    delete g.records;
+    const root = safeBrainVaultRoot(b.path);
+    const out = await SecondBrainVault.writeVault({ fs: fs, fsp: fsp, path: path, root: root, graph: g, records: records, now: Date.now(), roster: g.nodes.filter(n => n.type === 'agent').map(n => n.label) });
+    brainLastExport = { ok: true, root: out.root, files: out.files, counts: out.counts, at: out.generatedAt };
+    return out;
+  })();
+  try {
+    const out = await brainExporting;
+    respondJson(res, 200, out);
+  } catch (e) {
+    brainLastExport = { ok: false, error: String((e && e.message) || e), at: Date.now() };
+    respondJson(res, 500, readRouteFailure('secondbrain.export', e));
+  } finally { brainExporting = null; }
 }
 
 /* GET /api/memory/pending?agent=<id> — high-stakes proposals still awaiting a Keep/Edit/Discard verdict, oldest
