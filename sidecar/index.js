@@ -27882,7 +27882,7 @@ function locateBrainSource(kind, input) {
     const candidates = kind === 'graphify'
       ? [path.join(p, 'graphify-out', 'graph.json'), path.join(p, 'graph.json')]
       : [path.join(p, '.base', 'graph.nq'), path.join(p, 'graph.nq')];
-    for (const c of candidates) { try { if (fs.statSync(c).isFile()) return { file: c }; } catch (_) {} }
+    for (const c of candidates) { try { if (fs.statSync(c).isFile()) return { file: c }; } catch (e) { failNote('brain.candidate.stat', e); } }
     return { error: 'no ' + (kind === 'graphify' ? 'graphify-out/graph.json' : '.base/graph.nq') + ' under ' + p };
   }
   const base = path.basename(p).toLowerCase();
@@ -27979,7 +27979,7 @@ async function handleSecondBrainIngest(req, res) {
 // POST /api/secondbrain/sources/clear { kind? } — forget one imported graph (or all of them)
 async function handleSecondBrainSourcesClear(req, res) {
   let b = {};
-  try { const raw = await readBody(req, 4096); b = raw ? (JSON.parse(raw) || {}) : {}; } catch (_) {}
+  try { const raw = await readBody(req, 4096); b = raw ? (JSON.parse(raw) || {}) : {}; } catch (e) { failNote('brain.route.body', e); }
   const kind = b && b.kind ? String(b.kind) : '';
   const list = kind ? readBrainSources().filter(s => s.source !== kind) : [];
   writeBrainSources(list);
@@ -27994,14 +27994,14 @@ let brainReflecting = false;
 async function handleSecondBrainReflect(req, res) {
   if (brainReflecting) return respondJson(res, 409, { ok: false, error: 'a reflection pass is already running' });
   let b = {};
-  try { const raw = await readBody(req, 4096); b = raw ? (JSON.parse(raw) || {}) : {}; } catch (_) {}
+  try { const raw = await readBody(req, 4096); b = raw ? (JSON.parse(raw) || {}) : {}; } catch (e) { failNote('brain.route.body', e); }
   brainReflecting = true;
   try {
     const store = readBrainStores();
     const graph = SecondBrain.buildGraph({ agents: store.roster, notebooks: store.notebooks, embeddings: store.embeddings, sources: readBrainSources(), now: Date.now() });
     const declined = {};
     for (const id of store.ids) {
-      try { const d = notebookStore.get('declined:' + id); if (Array.isArray(d)) declined[id] = d; } catch (_) {}
+      try { const d = notebookStore.get('declined:' + id); if (Array.isArray(d)) declined[id] = d; } catch (e) { failNote('brain.declined.read', e); }
     }
     const now = Date.now();
     const only = b.agentId ? String(b.agentId) : null;

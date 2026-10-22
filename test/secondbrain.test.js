@@ -160,10 +160,12 @@ A.eq(SecondBrain.recallPulse(g, ''), [], 'an empty probe surfaces nothing');
 
     // path safety: a record title can never escape the vault folder
     const evil = SecondBrain.buildGraph({ agents: [{ agentId: 'x', name: '../../owned' }], notebooks: { x: [{ id: 'note_1', title: '../../../../etc/passwd', body: 'x' }] }, now: NOW });
-    const evilDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'agentos-brain-evil-'));
+    const evilBase = await fsp.mkdtemp(path.join(os.tmpdir(), 'agentos-brain-evil-'));
+    const evilDir = path.join(evilBase, 'a', 'b', 'c', 'd');   // 4 levels deep so '../../../../etc/passwd' lands inside evilBase, never on the host's real /etc
+    await fsp.mkdir(evilDir, { recursive: true });
     await Vault.writeVault({ fs: fs, fsp: fsp, path: path, root: evilDir, graph: evil, records: {}, now: NOW });
     A.ok(fs.existsSync(evilDir), 'a hostile title still writes inside the vault root');
-    A.ok(!fs.existsSync(path.join(evilDir, '..', '..', '..', '..', 'etc', 'passwd')), 'and never escapes it');
+    A.ok(!fs.existsSync(path.join(evilBase, 'etc', 'passwd')), 'and never escapes it');
   } catch (e) {
     A.ok(false, 'vault export threw: ' + ((e && e.stack) || e));
   } finally {

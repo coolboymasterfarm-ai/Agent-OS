@@ -452,7 +452,8 @@ async function writeVault(deps) {
   if (!fs || !fsp || !pathMod) throw new Error('writeVault: fs/fsp/path required');
   if (!root) throw new Error('writeVault: root required');
   if (!graph || !Array.isArray(graph.nodes)) throw new Error('writeVault: graph required');
-  const now = Number(deps.now) || Date.now();
+  const now = Number(deps.now);
+  if (!Number.isFinite(now)) throw new Error('writeVault: now required');
   const roster = Array.isArray(deps.roster) ? deps.roster : [];
 
   const dirs = ['', 'Agents', 'Memories', 'Projects', 'Streams', 'Concepts', '.obsidian'];

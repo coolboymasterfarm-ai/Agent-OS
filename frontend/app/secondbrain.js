@@ -60,7 +60,7 @@ const SecondBrain = (() => {
     '.sb-side{display:flex;flex-direction:column;gap:8px;min-width:0}',
     '.sb-panel{border:1px solid rgba(255,255,255,.07);border-radius:6px;background:rgba(255,255,255,.02);padding:8px 10px;min-height:0}',
     '.sb-panel h4{margin:0 0 6px;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#8b8f96;font-weight:600}',
-    '.sb-feed{overflow:auto;max-height:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.5}',
+    '.sb-feed{overflow:auto;max-height:240px;font-family:VT323,monospace;font-size:10.5px;line-height:1.5}',
     '.sb-row{display:flex;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);opacity:0;animation:sb-in .25s ease forwards}',
     '@keyframes sb-in{to{opacity:1}}',
     '.sb-row time{color:#6f747b;flex:0 0 42px}',
@@ -478,7 +478,7 @@ const SecondBrain = (() => {
         if (n.type === 'agent' || n === state.byId[state.selected]) {
           ctx.globalAlpha = dimmed ? 0.3 : 0.92;
           ctx.fillStyle = 'rgba(232,234,236,.92)';
-          ctx.font = (n.type === 'agent' ? '600 11px ' : '10px ') + 'ui-monospace, Menlo, monospace';
+          ctx.font = (n.type === 'agent' ? '600 11px ' : '10px ') + 'VT323, monospace';
           ctx.textAlign = 'center';
           ctx.fillText(String(n.label || '').slice(0, 22), n.x, n.y - n.r - 6);
           if (n.useCount != null && n.type === 'memory') ctx.fillText(num(n.useCount) + '×', n.x, n.y + n.r + 12);
@@ -486,15 +486,15 @@ const SecondBrain = (() => {
       }
       ctx.globalAlpha = 1;
       if (state.loading) {
-        ctx.fillStyle = 'rgba(232,234,236,.6)'; ctx.font = '11px ui-monospace, monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(232,234,236,.6)'; ctx.font = '11px VT323, monospace'; ctx.textAlign = 'center';
         ctx.fillText('reading every notebook…', w / 2, h / 2);
       }
       if (state.error) {
-        ctx.fillStyle = 'rgba(207,125,150,.9)'; ctx.font = '11px ui-monospace, monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(207,125,150,.9)'; ctx.font = '11px VT323, monospace'; ctx.textAlign = 'center';
         ctx.fillText(state.error, w / 2, h / 2);
       }
       if (state.sampled) {
-        ctx.fillStyle = 'rgba(139,143,150,.8)'; ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(139,143,150,.8)'; ctx.font = '9px VT323, monospace'; ctx.textAlign = 'right';
         ctx.fillText('sampled — ' + num(state.graph && state.graph.stats && state.graph.stats.memories) + ' beliefs total', w - 10, h - 10);
       }
     }
