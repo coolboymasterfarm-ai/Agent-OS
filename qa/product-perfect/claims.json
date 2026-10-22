@@ -18,8 +18,8 @@
   "expectedClaimCount": 37,
   "releaseSurface": {
     "algorithm": "sha256",
-    "sourceCommit": "c5d8023cc828607ef580a41956f14807a0b83951",
-    "pathSetSha256": "213a4211bc1a66001a9f827b197c1b7aff1194373527f28d43c7ea6f2ebd706c",
+    "sourceCommit": "fc04bea2979b1487614db18ee37ac0f344600836",
+    "pathSetSha256": "0b994c355e0e1a7ac8f6d319a722c67ac870b5c4e2cc14960358a92d6302e9ce",
     "files": [
       {
         "path": "INSTALL.md",
@@ -1087,6 +1087,11 @@
         "sha256": "714bdeb4cb0a5e5e0a65fa00e71d9b4ea30af23651cdfb6a0471c8e5b0252d1d"
       },
       {
+        "path": "frontend/app/secondbrain.js",
+        "bytes": 37434,
+        "sha256": "68f52a3aa142cbb1723d08275486b844c6b61cce7279f6301e3b91c1f0057df2"
+      },
+      {
         "path": "frontend/app/seedcredit.js",
         "bytes": 4962,
         "sha256": "5a586801329597d3b1d231a0b08f4c7e4e82949fc9baa03cbc9edfbff238c3c8"
@@ -1183,8 +1188,8 @@
       },
       {
         "path": "frontend/app/stationui.js",
-        "bytes": 927975,
-        "sha256": "b02c085e585c2db2bb76b5f7604601312049cb6817ae4ee07bae2f0c952d5513"
+        "bytes": 928718,
+        "sha256": "91399715c21d970f28d5b82c94e1986fbfbb91674e820c830d6fa2e954a31799"
       },
       {
         "path": "frontend/app/stepin.js",
@@ -1808,8 +1813,8 @@
       },
       {
         "path": "frontend/index.html",
-        "bytes": 98802,
-        "sha256": "ca1af29c33717bdab27ec0238e0b8da785eb12f8723db4c00386c6cf3f02774d"
+        "bytes": 99296,
+        "sha256": "3c82d1d01ad7876acf9cf2c09c8097d8d6097876c6fa3aa20aac638cfbbde54f"
       },
       {
         "path": "frontend/js/arcade.js",
