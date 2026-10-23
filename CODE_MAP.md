@@ -1,6 +1,6 @@
 # CODE_MAP — what lives where (rebuilt 2026-07-06)
 
-Real structure of the StarNet harness, grounded against trunk. Numbers are approximate and
+Real structure of the Agent OS harness, grounded against trunk. Numbers are approximate and
 drift — trust `wc -l` over this file. Start at [docs/BRAIN.md](docs/BRAIN.md) if you're new.
 
 > The previous CODE_MAP.md was a June-era single-agent→multi-agent refactor plan for

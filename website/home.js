@@ -1,4 +1,4 @@
-/* StarNet homepage motion — starfield, heading decode, scroll-driven monitor + statement,
+/* Agent OS homepage motion — starfield, heading decode, scroll-driven monitor + statement,
    capability console. Homepage-only (site.js stays the shared script for index + pricing).
    Network-free by construction: this file makes no requests. Everything degrades to a still,
    complete page without JS or under prefers-reduced-motion. */

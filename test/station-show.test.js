@@ -1,4 +1,4 @@
-// station.show — the agent opens a StarNet window for the Commander (2026-10-04, "so it can basically use itself").
+// station.show — the agent opens an Agent OS window for the Commander (2026-10-04, "so it can basically use itself").
 // The REAL tool (sidecar/tools/builtin/station-show.js) through the REAL page verb (frontend/app/stationcommands.js
 // station.show) over a recorded StationUI, plus drift checks that every place names a window/section that exists.
 'use strict';
@@ -139,11 +139,11 @@ function boot(opts) {
     ok(/^REFUSED: the Commander is not looking at this conversation/.test(r.content) && !env.calls.length, 'refused, nothing opened: ' + why);
   }
   r = await boot({ noPage: true }).run({ place: 'settings' });
-  ok(/^REFUSED: this run has no StarNet page attached/.test(r.content), 'no page attached: an honest refusal');
+  ok(/^REFUSED: this run has no Agent OS page attached/.test(r.content), 'no page attached: an honest refusal');
   r = await boot({ refuse: 'apps' }).run({ place: 'apps' });
   ok(/^REFUSED: APPS did not open .*no app exists yet/.test(r.content), 'a window that did not open is never reported open');
   r = await boot().run({ place: 'the moon' });
-  ok(/^REFUSED: there is no StarNet place/.test(r.content), 'an unknown place refuses');
+  ok(/^REFUSED: there is no Agent OS place/.test(r.content), 'an unknown place refuses');
 
   console.log('station-show: OK (' + n + ' assertions)');
 })().catch(e => { console.error(e); process.exit(1); });

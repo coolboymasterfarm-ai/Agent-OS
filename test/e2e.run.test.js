@@ -187,7 +187,7 @@ function boot(port, env, attemptsLeft) {
     A.ok(firstSystem.indexOf('[RUNTIME]') >= 0, 'runtime identity block reaches the provider (run-context note)');
     A.ok(firstSystem.indexOf('Provider: openrouter') >= 0, 'runtime block names the selected provider');
     A.ok(firstSystem.indexOf('Requested model at run start: test/model') >= 0, 'runtime block names the requested model');
-    A.ok(firstSystem.indexOf('If the Commander asks what StarNet build, model, provider') >= 0, 'runtime block tells the agent to answer build/model/provider questions from host state');
+    A.ok(firstSystem.indexOf('If the Commander asks what Agent OS build, model, provider') >= 0, 'runtime block tells the agent to answer build/model/provider questions from host state');
 
     // CURRENT-RELEASE INCIDENT: an orphaned tool result used to pass straight through OpenRouter and make
     // every replay fail with the same provider 400. Drive the malformed history through the real HTTP route,
@@ -212,7 +212,7 @@ function boot(port, env, attemptsLeft) {
       A.ok((wire.messages || []).some(m => m && m.role === 'user' && String(m.content).indexOf('[recovered tool result orphan_live_1') >= 0 && String(m.content).indexOf('preserved result') >= 0), 'the provider receives a truthful recovery label with the original result content');
     }
 
-    // The managed StarNet route shares the generic adapter with custom endpoints. Exercise that adapter
+    // The managed Agent OS route shares the generic adapter with custom endpoints. Exercise that adapter
     // through the real run loop too; direct OpenRouter coverage alone missed this recovery gap.
     {
       const before = mock.requests.length;

@@ -282,7 +282,7 @@ A.eq(taint.postTaintBoundary(FS_WRITE, { taintedBy: 'web_fetch', surface: 'auton
   // the model verbatim. `isError: true` was therefore a one-flag bypass of the whole taint rule.
   A.ok(/if \(r && typeof r\.content === 'string' && r\.content\.length && !\(r\.isError && r\.hostAuthored === true\) && revokedByTaint\.isSource\(liveTool, c\)\) \{\s*taintScope = [^\n]*\n\s*if \(!execution\.taintedBy\(\)\) latchRunTaint\(c\.name\);/.test(src),
     'any untrusted-source result carrying real content taints — an isError flag is not an exemption; only a refusal the HOST wrote is');
-  // hostAuthored is minted only by StarNet's own URL guards — never by a connector, whose failure text IS third-party bytes
+  // hostAuthored is minted only by Agent OS's own URL guards — never by a connector, whose failure text IS third-party bytes
   {
     const tools = path.join(__dirname, '..', 'sidecar');
     const minted = ['tools/builtin/browser.js', 'tools/builtin/web.js'];
@@ -313,7 +313,7 @@ A.eq(taint.postTaintBoundary(FS_WRITE, { taintedBy: 'web_fetch', surface: 'auton
   // team.resume: the stored task's taint rides along (resumeConnectorOptions resumedTaint) — never blame a clean resuming
   // lead's chat, and never promise that resuming from a new session unlocks it
   A.ok(/const fromResume = !!resumedTaint && !!ownTaint && ownTaint === taintHandedIn && taintHandedIn === resumedTaint;/.test(src)
-    && /const taintCause = fromResume\s*\n\s*\? (?:\(unverified\s*\n\s*\? 'This run resumes a task whose original context StarNet could not verify[^\n]*\n[^\n]*\n\s*: )?'This run resumes a task first handed over from a chat with outside content/.test(src),
+    && /const taintCause = fromResume\s*\n\s*\? (?:\(unverified\s*\n\s*\? 'This run resumes a task whose original context Agent OS could not verify[^\n]*\n[^\n]*\n\s*: )?'This run resumes a task first handed over from a chat with outside content/.test(src),
     'a resumed task\'s lock says it rides the stored task, checked BEFORE the handed-over-by-the-lead wording');
   A.ok(/resuming it stays under the same lock from any session/.test(src) && /\(resumedTaint\s*\n\s*\? 'hand the task over fresh \(not resumed\) from a new session/.test(src),
     'a resumed task\'s remedy is a fresh hand-over, not a resume from a new session');

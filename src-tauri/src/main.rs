@@ -318,7 +318,7 @@ impl KeepAwakeHandle {
         };
 
         let mut reason: Vec<u16> =
-            "StarNet scheduled tasks are allowed to run while the app is open"
+            "Agent OS scheduled tasks are allowed to run while the app is open"
                 .encode_utf16()
                 .chain(std::iter::once(0))
                 .collect();
@@ -2063,15 +2063,15 @@ fn show_startup_failure_dialog(_app: &AppHandle, startup_log: &Option<PathBuf>) 
         None => "No startup log path was available.".to_string(),
     };
     let body = format!(
-        "StarNet could not start its local engine.\n\n\
+        "Agent OS could not start its local engine.\n\n\
          The engine exited or did not become ready. Possible causes include unavailable workspace \
          files, a blocked Node runtime, or a port that could not be opened.\n\n\
          {log_line}\n\n\
-         Click Retry to try starting the engine again, or Cancel to close StarNet."
+         Click Retry to try starting the engine again, or Cancel to close Agent OS."
     );
     let to_wide = |s: &str| -> Vec<u16> { s.encode_utf16().chain(std::iter::once(0)).collect() };
     let text = to_wide(&body);
-    let caption = to_wide("StarNet — startup failed");
+    let caption = to_wide("Agent OS — startup failed");
     // SYSTEMMODAL + SETFOREGROUND so the box is seen even though the main window isn't up yet.
     let result = unsafe {
         MessageBoxW(
@@ -2096,9 +2096,9 @@ fn show_startup_failure_dialog(app: &AppHandle, startup_log: &Option<PathBuf>) -
     eprintln!("[starnet] startup failed: sidecar did not come up (see startup.log)");
     show_nonblocking_startup_notice(
         app,
-        "StarNet — local engine not ready",
+        "Agent OS — local engine not ready",
         format!(
-            "StarNet could not start its local engine yet. It will keep retrying in the background, \
+            "Agent OS could not start its local engine yet. It will keep retrying in the background, \
              but the station may stay unreachable until it does.\n\n{}",
             startup_log_line(startup_log)
         ),
@@ -2151,8 +2151,8 @@ fn report_window_startup_failure(
             .unwrap_or_else(|| "unavailable".into());
         show_nonblocking_startup_notice(
             app,
-            "StarNet — window startup",
-            format!("StarNet's window could not finish starting.\n\n{detail}\n\nQuit StarNet and reopen it. If this persists, include startup.log in your bug report:\n{path}"),
+            "Agent OS — window startup",
+            format!("Agent OS's window could not finish starting.\n\n{detail}\n\nQuit Agent OS and reopen it. If this persists, include startup.log in your bug report:\n{path}"),
             on_dismiss,
         );
     }
@@ -2165,9 +2165,9 @@ fn report_window_startup_failure(
             .as_ref()
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "unavailable".into());
-        let text: Vec<u16> = format!("StarNet's window could not finish starting.\n\n{detail}\n\nQuit StarNet from its tray icon and reopen it. If this persists, include startup.log in your bug report:\n{path}")
+        let text: Vec<u16> = format!("Agent OS's window could not finish starting.\n\n{detail}\n\nQuit Agent OS from its tray icon and reopen it. If this persists, include startup.log in your bug report:\n{path}")
             .encode_utf16().chain(std::iter::once(0)).collect();
-        let title: Vec<u16> = "StarNet — window startup"
+        let title: Vec<u16> = "Agent OS — window startup"
             .encode_utf16()
             .chain(std::iter::once(0))
             .collect();
@@ -2356,7 +2356,7 @@ fn spawn_guardian(app: AppHandle) {
                             count = count.saturating_add(1);
                             if count >= GUARDIAN_MAX_CONSECUTIVE_CRASHES {
                                 let reason = format!(
-                                    "crash-loop: the station service exited {count} times in {} minutes (last exit code {code:?}); the guardian stopped restarting it. Use RESTART STATION SERVICE to try again, or quit StarNet fully and reopen it.",
+                                    "crash-loop: the station service exited {count} times in {} minutes (last exit code {code:?}); the guardian stopped restarting it. Use RESTART STATION SERVICE to try again, or quit Agent OS fully and reopen it.",
                                     GUARDIAN_CRASH_WINDOW.as_secs() / 60
                                 );
                                 log_startup(
@@ -2874,7 +2874,7 @@ fn build_main_window(
         // Let HTML5 file drops reach COMMS and the existing attachment uploader.
         // Tauri's native handler otherwise intercepts them on Windows.
         .disable_drag_drop_handler()
-        .title("StarNet")
+        .title("Agent OS")
         .inner_size(1280.0, 832.0)
         .min_inner_size(960.0, 600.0)
         .initialization_script(&init)
@@ -3124,7 +3124,7 @@ fn on_webview_process_failed(
     if !state.webview_recovery.try_spend(Instant::now()) {
         log_startup(
             &log,
-            format!("webview-recovery: {name}; recovery budget spent (3 in 10 min), leaving the window as-is; restart StarNet to recover"),
+            format!("webview-recovery: {name}; recovery budget spent (3 in 10 min), leaving the window as-is; restart Agent OS to recover"),
         );
         return;
     }
@@ -3384,26 +3384,26 @@ fn spawn_tray_updater(app: AppHandle) {
                         l.reasons.join(", ")
                     };
                     (
-                        format!("StarNet — {summary}"),
+                        format!("Agent OS — {summary}"),
                         format!("Background: {summary}"),
                     )
                 }
                 LifecycleProbe::Armed(_) if close_to_tray => (
-                    "StarNet — idle in tray".to_string(),
-                    "Background: idle — close keeps StarNet running".to_string(),
+                    "Agent OS — idle in tray".to_string(),
+                    "Background: idle — close keeps Agent OS running".to_string(),
                 ),
                 LifecycleProbe::NotRunning if close_to_tray => (
-                    "StarNet — engine offline (kept in tray)".to_string(),
-                    "Background: engine offline — close keeps StarNet running".to_string(),
+                    "Agent OS — engine offline (kept in tray)".to_string(),
+                    "Background: engine offline — close keeps Agent OS running".to_string(),
                 ),
                 LifecycleProbe::Armed(_) | LifecycleProbe::NotRunning => (
                     // Nothing armed (or no engine at all): closing quits — the same rule the close path applies.
-                    "StarNet — idle (closing quits)".to_string(),
+                    "Agent OS — idle (closing quits)".to_string(),
                     "Background: idle — closing quits".to_string(),
                 ),
                 LifecycleProbe::Ambiguous => (
                     // Alive but the poll failed — honest "unknown", mirroring the close path's fail-open.
-                    "StarNet — status unavailable (close keeps it running)".to_string(),
+                    "Agent OS — status unavailable (close keeps it running)".to_string(),
                     "Background: status unavailable — close keeps it running".to_string(),
                 ),
             };
@@ -3864,7 +3864,7 @@ async fn starnet_open_artifact(
         "Open this file with its system default app?\n\n{}",
         artifact.display()
     );
-    if !confirm_host_launch(&app, "StarNet — open file", &body, "Open") {
+    if !confirm_host_launch(&app, "Agent OS — open file", &body, "Open") {
         return Err(format!("open {HOST_GESTURE_DECLINED}"));
     }
 
@@ -3912,7 +3912,7 @@ async fn starnet_reveal_path(
         },
         artifact.display()
     );
-    if !confirm_host_launch(&app, "StarNet — reveal in folder", &body, "Reveal") {
+    if !confirm_host_launch(&app, "Agent OS — reveal in folder", &body, "Reveal") {
         return Err(format!("reveal {HOST_GESTURE_DECLINED}"));
     }
 
@@ -4546,7 +4546,7 @@ struct LifecycleView {
 fn starnet_restart_sidecar(state: State<AppState>) -> Result<bool, String> {
     let st: &AppState = state.inner();
     if st.shutting_down.load(Ordering::SeqCst) {
-        return Err("StarNet is shutting down".to_string());
+        return Err("Agent OS is shutting down".to_string());
     }
     let _recovery = begin_recovery(st)?;
     log_startup(
@@ -4605,7 +4605,7 @@ fn starnet_start_fresh(
 ) -> Result<FreshStartView, String> {
     let st: &AppState = state.inner();
     if st.shutting_down.load(Ordering::SeqCst) {
-        return Err("StarNet is shutting down".to_string());
+        return Err("Agent OS is shutting down".to_string());
     }
     let _recovery = begin_recovery(st)?;
     log_startup(
@@ -4736,7 +4736,7 @@ fn starnet_erase_everything(
     }
     let st: &AppState = state.inner();
     if st.shutting_down.load(Ordering::SeqCst) {
-        return Err("StarNet is shutting down - nothing was erased".to_string());
+        return Err("Agent OS is shutting down - nothing was erased".to_string());
     }
     let _recovery = begin_recovery(st)?;
     log_startup(
@@ -4775,7 +4775,7 @@ fn starnet_erase_everything(
                 format!("erase: refused before any deletion ({error}); station respawn listening={listening}"),
             );
             return Err(format!(
-                "nothing was erased - {error}. Close any other StarNet window or browser and try again."
+                "nothing was erased - {error}. Close any other Agent OS window or browser and try again."
             ));
         }
     };
@@ -5109,7 +5109,7 @@ fn main() {
             // the E-STOP (reaches background work even with the window closed); Quit drains + kills the sidecar
             // and exits. Built here so it exists before the window, so a close-to-tray has somewhere to live.
             {
-                let open_item = MenuItem::with_id(app, "lifecycle_open", "Open StarNet", true, None::<&str>)?;
+                let open_item = MenuItem::with_id(app, "lifecycle_open", "Open Agent OS", true, None::<&str>)?;
                 let hud_item = MenuItem::with_id(app, "lifecycle_hud", "HUD Mode", true, None::<&str>)?;
                 let status_item = MenuItem::with_id(
                     app,
@@ -5121,11 +5121,11 @@ fn main() {
                     None::<&str>,
                 )?;
                 let pause_item = MenuItem::with_id(app, "lifecycle_pause", "Pause Automation (E-STOP)", true, None::<&str>)?;
-                let quit_item = MenuItem::with_id(app, "lifecycle_quit", "Quit StarNet", true, None::<&str>)?;
+                let quit_item = MenuItem::with_id(app, "lifecycle_quit", "Quit Agent OS", true, None::<&str>)?;
                 let sep = PredefinedMenuItem::separator(app)?;
                 let menu = Menu::with_items(app, &[&open_item, &hud_item, &status_item, &sep, &pause_item, &quit_item])?;
                 let mut tray_builder = TrayIconBuilder::with_id("starnet-tray")
-                    .tooltip("StarNet")
+                    .tooltip("Agent OS")
                     .menu(&menu)
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| on_tray_menu(app, event.id.as_ref()))
@@ -5203,7 +5203,7 @@ fn main() {
             Ok(())
         })
         .build(context)
-        .expect("failed to build the StarNet desktop shell")
+        .expect("failed to build the Agent OS desktop shell")
         .run(|app, event| {
             if let RunEvent::ExitRequested { api, code, .. } = event {
                 // WebView2 crash recovery destroys the dead main window before building its

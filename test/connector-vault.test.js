@@ -282,11 +282,11 @@ try {
     assert.equal(held.lockReason, 'busy', 'a file another program holds is locked as busy');
     assert.deepEqual(held.lockDetail, { readCode: 'EBUSY' }, 'and keeps the read error for the message');
     const msg = lockMessage('busy', '', held.lockDetail);
-    assert.match(msg, /could not read the saved file \(EBUSY\).*antivirus.*safe and unchanged.*Restart StarNet/, msg);
+    assert.match(msg, /could not read the saved file \(EBUSY\).*antivirus.*safe and unchanged.*Restart Agent OS/, msg);
     assert.doesNotMatch(msg, /damaged/, 'it is not called damaged');
     // restart comes first; START FRESH stays a named exit for a file that is still locked after a restart (a
     // persistent EPERM), so the vault never locks with no way out — and never steers to it before a restart
-    assert.match(msg, /Restart StarNet to try again\. If it is still locked after a restart, START FRESH/, msg);
+    assert.match(msg, /Restart Agent OS to try again\. If it is still locked after a restart, START FRESH/, msg);
     { const v = make({ fs: heldFs('EPERM') }); assert.throws(() => v.load(f), /locked/); assert.equal(v.lockReason, 'busy', 'EPERM (Windows sharing/access denial) is busy too'); }
     { const v = make({ fs: heldFs('EIO') }); assert.throws(() => v.load(f), /locked/); assert.equal(v.lockReason, 'unreadable', 'a disk I/O error stays unreadable'); }
     { const v = make({ fs: heldFs('EACCES') }); assert.throws(() => v.load(f), /locked/); assert.equal(v.lockReason, 'unreadable', 'POSIX EACCES is not a passing hold (the credential-recovery fault hosts rely on it)'); }
@@ -294,13 +294,13 @@ try {
   }
   // security-storage-04: an interrupted reset says so, names the folder, and START FRESH finishes it.
   assert.match(lockMessage('reset-interrupted', '', { movedTo: path.join(root, 'unreadable-x') }), /START FRESH was interrupted.*not deleted.*unreadable-x.*START FRESH to finish/);
-  assert.doesNotMatch(lockMessage('reset-interrupted'), /damaged|newer StarNet/, 'an interrupted reset is not called a damaged file');
+  assert.doesNotMatch(lockMessage('reset-interrupted'), /damaged|newer Agent OS/, 'an interrupted reset is not called a damaged file');
   // ...but only promises START FRESH finishes it when START FRESH can: a marker that cannot be checked gets the
   // by-hand steps instead of a button that will always refuse
   {
     assert.match(restarted.lockDetail.unfinishable || '', /does not list the files it moved/, 'the lock knows the record cannot be checked');
     const msg = lockMessage('reset-interrupted', '', restarted.lockDetail);
-    assert.match(msg, /cannot be finished automatically, because its record does not list the files it moved.*unreadable-interrupted.*restart StarNet/, msg);
+    assert.match(msg, /cannot be finished automatically, because its record does not list the files it moved.*unreadable-interrupted.*restart Agent OS/, msg);
     assert.doesNotMatch(msg, /Press START FRESH to finish/, 'it does not promise a finish that START FRESH would refuse');
   }
   // a marker this build never writes (no sources list) cannot be checked: refuse, name the marker, change nothing

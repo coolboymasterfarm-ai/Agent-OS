@@ -91,7 +91,7 @@ function makeCase(o) {
     A.eq(c.installCalls(), 0, 'an unconfirmed newest save blocks the native installer');
     A.eq(c.calls.includes('/api/update/prepare') || c.calls.includes('POST /api/update/prepare'), false, 'no recovery point is cut over an unconfirmed save');
     A.ok(/latest station changes are not confirmed in the station file/i.test(state.error), 'the refusal names the unconfirmed station changes (got: ' + state.error + ')');
-    A.ok(/StarNet stays open/.test(state.error), 'the refusal says StarNet stays open');
+    A.ok(/Agent OS stays open/.test(state.error), 'the refusal says Agent OS stays open');
     A.ok(c.notices.some(n => /not confirmed in the station file/.test(String(n[0]))), 'the notice names the unconfirmed save');
   }
   {

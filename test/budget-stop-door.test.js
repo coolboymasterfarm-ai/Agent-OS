@@ -49,14 +49,14 @@ for (const [scope, cap, want] of [
   A.eq(opened, ['settings/budget'], 'and opens SETTINGS on the SPENDING LIMITS (budget) section');
 }
 
-// ---- a StarNet run whose ceiling was the BALANCE (admission clamped PER RUN to the wallet) ----
+// ---- an Agent OS run whose ceiling was the BALANCE (admission clamped PER RUN to the wallet) ----
 // Raising PER RUN does nothing there — the run spent what the wallet held. The sidecar marks that stop with the
 // additive agent.run.end field budgetCapIsBalance; every surface then names the balance and the top-up door.
 {
   const line = budgetStopLine('run', 79.24, true);
-  A.eq(line, 'used the $79.24 left on your StarNet balance — add credits under SETTINGS → AI & MODELS to keep going', 'a balance stop names the balance and the top-up door');
+  A.eq(line, 'used the $79.24 left on your Agent OS balance — add credits under SETTINGS → AI & MODELS to keep going', 'a balance stop names the balance and the top-up door');
   A.ok(!/per-run spend cap|raise/.test(line), 'and never tells the user to raise a cap that cannot help');
-  A.eq(budgetStopLine('run', 0.001, true), 'used what was left on your StarNet balance — add credits under SETTINGS → AI & MODELS to keep going', 'a sub-cent balance reads without a fake $0.00');
+  A.eq(budgetStopLine('run', 0.001, true), 'used what was left on your Agent OS balance — add credits under SETTINGS → AI & MODELS to keep going', 'a sub-cent balance reads without a fake $0.00');
   A.ok(/^hit the \$5 per-run spend cap — raise it in /.test(budgetStopLine('run', 5, false)), 'a stop at a cap the user chose still names that cap');
   A.ok(/^hit the \$25 daily spend cap/.test(budgetStopLine('day', 25, true)), 'the flag only speaks for a per-RUN stop');
   // the door is the top-up door friendlyerror's managed_credit already opens (one door source), not SPENDING LIMITS
@@ -128,7 +128,7 @@ for (const [scope, cap, want] of [
   const bal = SlagLog.diagnose('budget', { atBalance: true, cacheFrac: 0.05 });
   const line = SlagLog.line(bal);
   A.eq(bal.reason, 'budget', 'a balance stop is still a budget post-mortem (the maintenance quest keys on the reason)');
-  A.ok(/StarNet balance/.test(line) && /add credits under SETTINGS → AI & MODELS/i.test(line) && !/raise/i.test(line), 'a balance stop toast names the balance and the top-up door: ' + line);
+  A.ok(/Agent OS balance/.test(line) && /add credits under SETTINGS → AI & MODELS/i.test(line) && !/raise/i.test(line), 'a balance stop toast names the balance and the top-up door: ' + line);
   A.ok(/^hit the budget cap — Raise the budget/.test(SlagLog.line(SlagLog.diagnose('budget', { atBalance: false }))), 'a stop at a chosen cap keeps its own post-mortem');
   A.ok(/cold cache/.test(SlagLog.diagnose('budget', { cacheFrac: 0.05 }).title), 'and the cold-cache lesson is unchanged for a cap stop');
   const world = read('frontend/app/world.js');
@@ -140,7 +140,7 @@ for (const [scope, cap, want] of [
 {
   const { endNote } = require('../sidecar/channels/hub.js');
   const bal = endNote('budget', { budgetScope: 'run', budgetCapUsd: 10, budgetCapIsBalance: true });
-  A.eq(bal, '\n\n(used the $10 left on your StarNet balance — add credits in the app under SETTINGS → AI & MODELS.)', 'a channel balance stop names the balance and the top-up door');
+  A.eq(bal, '\n\n(used the $10 left on your Agent OS balance — add credits in the app under SETTINGS → AI & MODELS.)', 'a channel balance stop names the balance and the top-up door');
   const run = endNote('budget', { budgetScope: 'run', budgetCapUsd: 5 });
   A.ok(/hit the \$5 per-run spend cap — raise it in the app under SETTINGS › SPENDING LIMITS\.\)$/.test(run), 'a channel per-run stop says raise it, under SPENDING LIMITS: ' + run);
   const day = endNote('budget', { budgetScope: 'day', budgetCapUsd: 25 });
@@ -153,7 +153,7 @@ for (const [scope, cap, want] of [
   const note = endNote('budget');
   A.ok(/SETTINGS › SPENDING LIMITS/.test(note) && !/MISSION CONTROL/.test(note), 'an ACP budget stop names SPENDING LIMITS: ' + note);
   const bal = endNote('budget', true);
-  A.ok(/StarNet balance/.test(bal) && /SETTINGS → AI & MODELS/.test(bal) && !/raise/.test(bal), 'an ACP balance stop names the balance and the top-up door: ' + bal);
+  A.ok(/Agent OS balance/.test(bal) && /SETTINGS → AI & MODELS/.test(bal) && !/raise/.test(bal), 'an ACP balance stop names the balance and the top-up door: ' + bal);
 }
 // ACP: only the lead's own end decides (a delegated worker's run.end rides the same stream)
 async function acpLeadOnly() {
@@ -171,9 +171,9 @@ async function acpLeadOnly() {
     return sent.map(p => (p && p.update && p.update.content && p.update.content.text) || '').join('');
   };
   const lead = await turn([['agent.run.start', { runId: 'lead' }], ['agent.run.end', { runId: 'lead', reason: 'budget', budgetScope: 'run', budgetCapUsd: 3, budgetCapIsBalance: true }]]);
-  A.ok(/StarNet balance/.test(lead), 'the lead\'s balance stop reaches the editor: ' + JSON.stringify(lead.slice(-160)));
+  A.ok(/Agent OS balance/.test(lead), 'the lead\'s balance stop reaches the editor: ' + JSON.stringify(lead.slice(-160)));
   const worker = await turn([['agent.run.start', { runId: 'lead' }], ['agent.run.start', { runId: 'w1' }], ['agent.run.end', { runId: 'w1', reason: 'budget', budgetScope: 'run', budgetCapIsBalance: true }], ['agent.run.end', { runId: 'lead', reason: 'budget', budgetScope: 'run', budgetCapUsd: 3 }]]);
-  A.ok(/SPENDING LIMITS/.test(worker) && !/StarNet balance/.test(worker), 'a worker\'s balance stop never speaks for the lead: ' + JSON.stringify(worker.slice(-160)));
+  A.ok(/SPENDING LIMITS/.test(worker) && !/Agent OS balance/.test(worker), 'a worker\'s balance stop never speaks for the lead: ' + JSON.stringify(worker.slice(-160)));
 }
 // ---- /usage ----
 (async () => {

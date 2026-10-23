@@ -244,7 +244,7 @@ function retryable(t, opts) {
     const copyBtn = (function find(el) { if (el.tagName === 'BUTTON' && /COPY/.test(el.textContent)) return el; for (const c of el.children) { const r = find(c); if (r) return r; } return null; })(b);
     copyBtn.onclick();
     await new Promise(r => setTimeout(r, 10));
-    A.ok(copied.includes('STARNET BOOT GUARD') && copied.includes('Chat (app/chat.js)') && copied.endsWith('SIDECAR REPORT'), 'copy = page-side boot report + the sidecar report via Diag');
+    A.ok(copied.includes('AGENT OS BOOT GUARD') && copied.includes('Chat (app/chat.js)') && copied.endsWith('SIDECAR REPORT'), 'copy = page-side boot report + the sidecar report via Diag');
     A.eq(copyBtn.textContent, '✓ DIAGNOSTICS COPIED', 'button confirms the copy');
   }
   {

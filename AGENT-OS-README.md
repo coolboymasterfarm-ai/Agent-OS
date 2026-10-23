@@ -1,8 +1,8 @@
 # Agent-OS
 
-This repository is set up to document and automate the StarNet local AI agent stack from the public source repo and its GitHub release assets.
+This repository is set up to document and automate the Agent OS local AI agent stack from the public source repo and its GitHub release assets.
 
-## StarNet source repository
+## Agent OS source repository
 
 - Repo: https://github.com/androoAGI/starnet
 - Releases: https://github.com/androoAGI/starnet/releases
@@ -10,7 +10,7 @@ This repository is set up to document and automate the StarNet local AI agent st
 
 ## Quick install for a Chromebook / browser workflow
 
-Use the following commands in a terminal on your machine to clone the StarNet repo and download the latest release assets, including any Windows EXE binaries that are published in GitHub Releases:
+Use the following commands in a terminal on your machine to clone the Agent OS repo and download the latest release assets, including any Windows EXE binaries that are published in GitHub Releases:
 
 ```bash
 git clone https://github.com/androoAGI/starnet.git
@@ -35,12 +35,12 @@ This keeps the source repo and the bundled release binaries together in a local 
 
 - The source code lives in the `starnet` repository.
 - Executables are typically published under GitHub Releases rather than committed directly into the main repo tree.
-- This repository here does not contain the StarNet binary itself; it contains an automation workflow and reference information for downloading it.
+- This repository here does not contain the Agent OS binary itself; it contains an automation workflow and reference information for downloading it.
 
 ## Recommended PR title
 
-`Add StarNet source and release automation guidance`
+`Add Agent OS source and release automation guidance`
 
 ## Recommended PR description
 
-This change adds guidance for retrieving the StarNet source repo and the latest GitHub release assets, including executable binaries distributed through the project’s Releases page.
+This change adds guidance for retrieving the Agent OS source repo and the latest GitHub release assets, including executable binaries distributed through the project’s Releases page.
