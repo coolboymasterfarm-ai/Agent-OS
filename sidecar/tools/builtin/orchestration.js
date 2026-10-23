@@ -79,7 +79,11 @@
      Access or an existing orchestrator:write grant; recruiting crew and binding services are refused in station.plan for a delegated run, and making props,
      testing and starting lines stay the lead's. Only for a lead whose own run can build: a lend never widens. */
   const BUILDER_KIT = [{ instanceId: 'builder_lent', objectType: 'builder' }];
-  const kitFor = lent => (lent ? WORKER_KIT.concat(BUILDER_KIT) : WORKER_KIT);
+  /* THE LENT TEAM LEAD (teams): dispatching a team MANAGER lends it team.dispatch + team.subagents (CAP_REGISTRY.teamlead)
+     and nothing else of the orchestrator: no summon, spawn, routines or station control. Its roster is cut to its own
+     members (see `teamScope` below), and a manager's own dispatches never lend it on, so depth is capped at two. */
+  const TEAMLEAD_KIT = [{ instanceId: 'teamlead_lent', objectType: 'teamlead' }];
+  const kitFor = (lent, team) => (lent ? WORKER_KIT.concat(BUILDER_KIT) : WORKER_KIT).concat(team ? TEAMLEAD_KIT : []);
   const canLendBuilder = ctx => { try { const r = ctx && typeof ctx.canUse === 'function' ? ctx.canUse({ name: 'station.build' }) : null; return !!(r && r.ok); } catch (_) { return false; } };
   // isFile: the worker run's own file probe (deps.fileProbe) — the dispatcher and the worker's run answer ONE way
   const boundedDomainTask = (text, isFile) => {
@@ -382,7 +386,12 @@
   function makeOrchestrationTools(deps) {
     deps = deps || {};
     const runOnce = deps.runOnce;
-    const roster = (typeof deps.roster === 'function') ? deps.roster : (() => new Map());
+    // TEAMS (sidecar/teams.js): deps.teams() is the host's team list; deps.teamScope is set only on a team MANAGER's own
+    // run and cuts its roster to its members, so a manager can neither see nor dispatch anyone else.
+    const Teams = (typeof require === 'function' && typeof deps.teams === 'function') ? require('../../teams.js') : null;
+    const teamScope = Teams && Array.isArray(deps.teamScope) ? deps.teamScope : null;
+    const baseRoster = (typeof deps.roster === 'function') ? deps.roster : (() => new Map());
+    const roster = () => (teamScope ? Teams.scopeRoster(baseRoster() || new Map(), teamScope) : baseRoster());
     const key = deps.key;
     const model = deps.model;
     const provider = deps.provider || null;
@@ -427,8 +436,8 @@
           : 'ASK FIRST. Writes and network calls (and commands, when shell_exec is in your tool list) are shown to the Commander for approval when you call the '
             + 'tool — so still just make the tool call, but expect a pause, and carry on without it if it is declined.');
     }
-    function workerSystem(base) {
-      const identity = String(base || '') + postureNote();
+    function workerSystem(base, team) {
+      const identity = String(base || '') + postureNote() + (team ? '\n\n' + Teams.managerBrief(team) : '');
       const liveContext = typeof deps.getTaskContext==='function' ? String(deps.getTaskContext() || '') : taskContext;
       if (!liveContext) return identity;
       return identity + '\n\n' + liveContext
@@ -797,7 +806,9 @@
           // a lend never widens: a lead whose own run cannot build gets this worker refused, not silently sent toolless
           const builder = !!(w && w.builder === true);
           if (builder && !canLendBuilder(ctx)) return { agentId: aid, error: 'builder:true needs the station builder in YOUR run, and it is not granted here: dispatch this worker without builder, or do the floor change yourself' };
-          return { agentId: aid, prompt: String((w && w.prompt) || ''), context: handoffContext(w && w.context), ident: crew.get(aid), session: session, resultSchema: contract.schema, builder };
+          // a team MANAGER is dispatched with its team's kit; a manager's own dispatches (teamScope set) never are
+          const team = Teams && !teamScope ? Teams.teamOfManager(Teams.normalizeTeams(deps.teams()), aid) : null;
+          return { agentId: aid, prompt: String((w && w.prompt) || ''), context: handoffContext(w && w.context), ident: crew.get(aid), session: session, resultSchema: contract.schema, builder, team };
         });
         markBatchQuality(jobs);
         // WHERE before WHO does the work: an unresolvable session marks its job failed here, so that worker is
@@ -895,7 +906,8 @@
               // lead's — a dispatched specialist honors its loadout. Falls back to the lead's effort when unset.
               reasoningEffort: (job.ident && job.ident.reasoningEffort) || reasoningEffort,
               model: wire.model,
-              system: workerSystem((job.ident && job.ident.system) || ''),
+              system: workerSystem((job.ident && job.ident.system) || '', job.team),
+              teamScope: job.team ? job.team.memberIds : undefined,   // the manager's run reads this to cut its own roster
               messages: previousMessages.concat([{ role: 'user', content: contractedPrompt }]),
               agentId: job.agentId, isTask: true,
               emit: o2.emit || childEmit,      // lifecycle/cost ride the lead/global stream -> the floor lights the worker
@@ -922,7 +934,7 @@
               // a BACKGROUND worker outlives its lead's turn, so its asks must too (index.js askHuman): they wait on the
               // Commander past the lead's end instead of being denied by it, and still fail closed on the consent timeout
               detachedConsent: o2.background === true,
-              extraObjects: kitFor(job.builder),   // + the LENT BUILDER when the lead dispatched it with builder:true
+              extraObjects: kitFor(job.builder, job.team),   // + the LENT BUILDER (builder:true) and, for a team manager, the LENT TEAM LEAD
               maxCostUsd: perWorker,           // a runaway worker can't blow the lead's per-run ceiling
               maxIters: bounded ? lowerPositive(workerMaxIters, bounded.workerMaxIters) : workerMaxIters,
               maxToolCalls: bounded ? bounded.workerMaxTools : undefined,

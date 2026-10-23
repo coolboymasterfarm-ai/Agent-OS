@@ -44,7 +44,7 @@ for (const propId of Object.keys(MAP)) {
    (jukebox is now a placeable grant via CAP_PROP_MAP — a placed JUKEBOX projects the spotify tools,
    inert until Spotify is connected in TOOLSETS — so it is reachable, not a conferral.)
    Anything else unreachable = a grant family no station can ever earn = dead registry weight. */
-const CONFERRED = ['orchestrator', 'builder'];
+const CONFERRED = ['orchestrator', 'builder', 'teamlead'];   // teamlead: LENT to a team manager when the lead dispatches it
 const reachable = new Set(Object.values(MAP));
 for (const t of REG_TYPES) {
   A.ok(reachable.has(t) || CONFERRED.includes(t),

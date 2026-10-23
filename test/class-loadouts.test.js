@@ -219,7 +219,7 @@ const TOOL_OWNER = {
 };
 // confirm every owner claim is actually true in the registry (guards the test's own map)
 const TOOL_TO_TYPE = {};
-for (const [type, grants] of Object.entries(CAP_REGISTRY)) for (const g of grants) TOOL_TO_TYPE[g.tool] = type;
+for (const [type, grants] of Object.entries(CAP_REGISTRY)) { if (type === 'builder' || type === 'teamlead') continue; for (const g of grants) TOOL_TO_TYPE[g.tool] = type; }   // lent slices of the orchestrator own no tool
 for (const [tool, owner] of Object.entries(TOOL_OWNER)) A.eq(TOOL_TO_TYPE[tool], owner, 'test map matches registry: ' + tool + ' -> ' + owner);
 for (const b of CATALOG) {
   const kit = new Set(b.kit);
