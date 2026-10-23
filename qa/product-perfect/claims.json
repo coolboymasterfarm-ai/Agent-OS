@@ -18,8 +18,8 @@
   "expectedClaimCount": 37,
   "releaseSurface": {
     "algorithm": "sha256",
-    "sourceCommit": "d58f3d1fa417c09c42b858b6459496266c1ede50",
-    "pathSetSha256": "213a4211bc1a66001a9f827b197c1b7aff1194373527f28d43c7ea6f2ebd706c",
+    "sourceCommit": "66e8f3c577bf0a1bf9ae63b407414f720bf74ce5",
+    "pathSetSha256": "0b994c355e0e1a7ac8f6d319a722c67ac870b5c4e2cc14960358a92d6302e9ce",
     "files": [
       {
         "path": "INSTALL.md",
@@ -28,8 +28,8 @@
       },
       {
         "path": "PRIVACY.md",
-        "bytes": 15236,
-        "sha256": "dcdb4c105d18d173d975d2bb19f584364886e13727546258f90341ce68cfa256"
+        "bytes": 15373,
+        "sha256": "dbf230f6ced11b60aad820c23f12b1d7ff512403f368613b5b19bfc8a479441b"
       },
       {
         "path": "README.md",
@@ -43,8 +43,8 @@
       },
       {
         "path": "TERMS.md",
-        "bytes": 5602,
-        "sha256": "190867dde79e12d400af4b62c489640077e1ae2d69cae4ec0e2fe1dde3946fc1"
+        "bytes": 5675,
+        "sha256": "7f25d14481a4aadb32339a49ec4d1739b950d84e9e0acdd62d23805fdf17e915"
       },
       {
         "path": "docs/DOWNLOAD_PAGE.md",
@@ -1087,6 +1087,11 @@
         "sha256": "ec101b7235c390fdb50660e3fffe30c362b75798d25490aef81eea62b3404696"
       },
       {
+        "path": "frontend/app/secondbrain.js",
+        "bytes": 37371,
+        "sha256": "38baa4941974f9b570d5fe5751d01eaef1e4962b0679fa23fba8456ec472b247"
+      },
+      {
         "path": "frontend/app/seedcredit.js",
         "bytes": 4963,
         "sha256": "98541cf1f15eb5d48db45f408a9e73f903e62e488421dc2c07b2f906e988dcdf"
@@ -1183,8 +1188,8 @@
       },
       {
         "path": "frontend/app/stationui.js",
-        "bytes": 928058,
-        "sha256": "52dffe80409630fd7c22e6c2139a5407b50b85a178e6a96f39dd0bf9cf8081db"
+        "bytes": 928801,
+        "sha256": "fdd1191c2ab7835caab06961ea5844808bcd00ab850d433a217efae804291c8c"
       },
       {
         "path": "frontend/app/stepin.js",
@@ -1808,8 +1813,8 @@
       },
       {
         "path": "frontend/index.html",
-        "bytes": 98843,
-        "sha256": "59cafd4a59b765023a14bb1ce1b8d4d1134ccbfc6e753b28cc97992b6cc848ed"
+        "bytes": 99337,
+        "sha256": "468c836c236126f2dd88e80c5af93f3240fa7e78797904805606fbe734ce5541"
       },
       {
         "path": "frontend/js/arcade.js",
