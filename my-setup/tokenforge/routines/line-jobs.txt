@@ -1,0 +1,64 @@
+=== Script Fix & Test ===
+Starts: By hand, once, PC on, TokenForge closed
+Job (495 chars):
+Engineer: edit the existing C:\Users\bryce\Downloads\tokenforge\update-from-github.bat and TokenForge\build.ps1 so UPDATE COMPLETE only prints when the pull, build and new exe are all verified; otherwise UPDATE FAILED and restore the backup. Don't create new scripts. Tester: actually run the updater 3 times on my PC (normal, --force, TokenForge left open) and paste the last 15 lines of each real log. If either of you can't run commands on my PC, stop and say so. Simulated tests don't count.
+
+=== CI Pipeline Builder ===
+Starts: By hand, once, after Script Fix & Test really passes
+Job (479 chars):
+Engineer: open one PR on coolboymasterfarm-ai/tokenforge adding tools/test-all.mjs (runs every test/*.test.js, exit 1 on failure), ci.yml (Windows, Node 20, tests on every push) and release.yml (build + Release with TokenForge.exe and SHA256 on v* tags). No secrets. Don't merge. Tester: confirm CI is green, every test file shows PASS in the log, and a v0.0.0-test tag built a Release; then delete that test tag and release. Paste the links. Can't reach GitHub: stop and say so.
+
+=== Nightly Health Sweep ===
+Starts: Schedule: nightly, 2 AM (or 9 PM if your PC sleeps)
+Job (492 chars):
+TokenForge Health Sweep. Nightly on my PC, read-only. There is no sweep script any more (tools/ was removed): test keys from the dashboard one at a time; save output to vault/teams/qa/sweeps/[date].md. Report only changes vs last sweep: answered count, newly broken (code + error), fixed. Tag each break: 401/403 my key, 402 paid (Free Tier Watch), 404 catalog fix, 5xx down, ERR/NOT PORTED bug (Bug Hunter). Broken 3 nights: one Issue labeled health. Never print keys. Crash: one line with the error, stop. Quiet: "N/M answered, no changes."
+
+=== TokenForge Bug Hunt ===
+Starts: Schedule: daily, 7 AM
+Job (487 chars):
+Researcher: read-only. Check %APPDATA%\TokenForge\tokenforge.log (errors seen 3+ times), last night's sweep, new GitHub Issues, and today's area: Mon router, Tue streaming, Wed adapters, Thu sign-in, Fri quota/health, Sat importer/store, Sun server/UI. Prove each bug with a failing test or steps failing 2 of 2 on clean main. Writer: drop anything unproven, file real ones as Issues labeled bug+proven (security bugs only in the vault, no keys ever). None: one line of what was checked.
+
+=== PR Manager ===
+Starts: Schedule: daily, 8 AM and 4 PM
+Job (497 chars):
+TokenForge PR Manager. Twice daily, every open PR oldest first: update from main (gh pr update-branch, never force-push); conflicts or red CI: comment the error, label "changes requested". Review PASS/FAIL per line: matches spec only, tests for new behavior, no keys in diff, no unapproved packages, catalog.json only via gen-catalog. All pass + green: label "ready for Bryce". 14 days idle: ask; 30: label stale. Update status.md: Ready / Waiting / Stale. Never merge, close or edit others' code.
+
+=== Token Forge Builder (backend + frontend) ===
+Starts: Schedule: daily, 10 AM
+Job (582 chars):
+Build the oldest Approved spec in /specs on one branch, feature/[n]-[name]. If none, reply "Nothing waiting" and stop. Backend Engineer: build the rust/src/ part (state, formats, main, catalog) with tests in #[cfg(test)] mod tests. If there is none, say "no backend part". Frontend Engineer: build the dashboard part (rust/assets/ui.html) on the same branch. If there is none, say "no frontend part". Build only the spec. Tester: run cargo test --manifest-path rust/Cargo.toml and paste the real output; screenshot changed screens. PASS or FAIL per "done means" item. Then open one PR. Never merge. Can't run something: say so.
+
+=== Bug Fix Automation ===
+Starts: Schedule: daily, 1 PM
+Job (506 chars):
+TokenForge Bug Fixer. Daily: take the most severe, oldest Issue labeled bug+proven with no open PR. Branch bugfix/[n]-[name] from origin/main. First add a test that fails on main and paste it. Find the cause: "It broke because ___" with file and line. Smallest fix, check every caller, run all tests. PR "Fixes #n" with cause, fix, before/after output, risk. Fix causes, not symptoms. No exploit details in security fixes. Never merge. Fails twice: comment and label "needs Bryce". None: "No bugs waiting."
+
+=== Weekly Feature Scan ===
+Starts: Schedule: Monday, 9 AM
+Job (519 chars):
+Researcher: find what users of local AI routers want. Check LiteLLM, OpenRouter, OmniRoute, Portkey changelogs and top issues, r/LocalLLaMA, and Cline/Open WebUI issues. Links and how many people asked, for every claim. Writer: compare with TokenForge's README, src/ and open feature Issues, then write up to 3 ideas: problem, proof, have it already?, first version, effort S/M/L, impact 1-5, and "Area: backend" or "Area: frontend". Save to vault/product/ideas.md, top 3 in status.md. Never code. None: "No new ideas."
+
+=== Provider Scout ===
+Starts: Schedule: Tuesday, 9 AM
+Job (493 chars):
+Researcher: find up to 5 AI providers with free tiers not in TokenForge's tools/gen-catalog.mjs or src/catalog.json. Prove each with links: free tier on its own pricing page, official API base URL, own sign-up key, real host (not a reseller of leaked keys), terms allow API use (quote). Never sign up or use keys. Writer: check each API format matches an adapter in src/adapters so auto can use it, write a draft FREE_CUSTOM line, and log rejects with reasons. None: say so + 3 closest misses.
+
+=== Weekly Route Audit ===
+Starts: Schedule: Wednesday, 9 AM
+Job (423 chars):
+Engineer: on my PC, measure auto for the last 7 days from the requests table (read-only), compare with last week, pick the one biggest problem with numbers, and design one fix. Tester: write a mock-provider test in test/ that shows the problem, then show the proposed fix makes it pass. Paste both outputs. Save the report and a spec for my approval. If either of you can't reach my PC, stop and say so; no made-up numbers.
+
+=== Free Tier Monitor ===
+Starts: Schedule: Thursday, 9 AM
+Job (503 chars):
+TokenForge Free Tier Watch. Weekly. Check providers with paid-model errors this week plus the 40 checked longest ago, on their own pricing pages. Report only changes: went paid, limits cut (old to new), new free model, shut down or URL moved. Each with link and VERIFIED or ESTIMATE. An error alone is not proof. Update vault/product/research/free-tier-state.md. Never change code; the Feature Builder fixes VERIFIED ones via tools/gen-catalog.mjs. No changes: "No free-tier changes across N providers."
+
+=== TokenForge Release Manager ===
+Starts: Schedule: Friday, 5 PM
+Job (498 chars):
+Engineer: list PRs merged since the last tag; none: "Nothing to release" and stop. Pick the version (fixes = patch, features or providers = minor, breaking = ask me). Write user-friendly notes (new, new free providers, no longer free, fixed, what users must do) into CHANGELOG.md in a release/v[x] PR. Tester: after I merge, check CI is green and smoke-test a test build on my PC with a temp TOKENFORGE_HOME: starts, /v1/models answers, one auto request answers. Paste output. Never push real tags.
+
+=== Upstream Sync Line ===
+Starts: Schedule: Saturday, 9 AM
+Job (477 chars):
+Engineer: check the OmniRoute and FreeLLMAPI repos for changes since the date in vault/teams/engineering/upstream-state.md; none: "Upstream quiet." On branch catalog/sync-[date], read the upstream repos directly (the old tools/*.json snapshots are gone; there is no catalog generator, so describe the catalog diff instead of editing rust/assets/catalog.json), and open a PR listing added, removed, URL/adapter changed and free changes. Confirm URL changes on provider docs. Never remove a provider. Tester: run cargo test --manifest-path rust/Cargo.toml, paste output, and check our FREE_CUSTOM entries weren't overwritten.
