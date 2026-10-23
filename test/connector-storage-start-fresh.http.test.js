@@ -114,9 +114,9 @@ const { FORMAT } = require('../sidecar/connector-vault.js');
       assert.equal(s.error, null, 'a leftover older file does not lock the store: ' + s.error);
       assert.equal(s.encrypted, true, 'the store it reads is still sealed');
       // its own field: the page heads every `notice` 'not encrypted', which a sealed store is not, and it claims nothing
-      // about the leftover file beyond what StarNet knows
+      // about the leftover file beyond what Agent OS knows
       assert.match(String(s.migrationNotice || ''), /could not be removed/, 'the panel is told, in plain words: ' + s.migrationNotice);
-      assert.doesNotMatch(String(s.migrationNotice || ''), /sealed/, 'no claim about a file StarNet could not remove');
+      assert.doesNotMatch(String(s.migrationNotice || ''), /sealed/, 'no claim about a file Agent OS could not remove');
       assert.equal(s.notice, null, 'not reported as an unencrypted store');
       const kept = await app.json('POST', '/api/connectors', { id: 'after-leftover', transport: 'http', url: 'http://127.0.0.1:1/mcp', enabled: false });
       assert.equal(kept.status, 200, 'saving still works: ' + JSON.stringify(kept.body));
@@ -129,7 +129,7 @@ const { FORMAT } = require('../sidecar/connector-vault.js');
     assert.equal(s.notice, null);
     await app.stop();
     // security-storage-05: antivirus, backup or sync holding state.json at boot (EBUSY) used to lock every sign-in as
-    // "damaged or from a newer StarNet" and steer the user to START FRESH, which sets an intact store aside. It is now
+    // "damaged or from a newer Agent OS" and steer the user to START FRESH, which sets an intact store aside. It is now
     // a 'busy' lock that names the read error and a restart first, keeps START FRESH as the exit for a file that is
     // still locked after one, and the store opens untouched once the file is free.
     busyApp = SidecarFixture.create({ prefix: 'starnet-credential-recovery-', entry: path.join(__dirname, 'helpers/connector-recovery-fault-host.cjs'),
@@ -145,7 +145,7 @@ const { FORMAT } = require('../sidecar/connector-vault.js');
     s = (await busyStorage()).credentialStorage;
     assert.equal(s.reason, 'busy', 'a held file is a busy lock: ' + JSON.stringify(s));
     assert.ok(String(s.error).includes('EBUSY'), 'the lock names the read error: ' + s.error);
-    assert.match(s.error, /Restart StarNet to try again\. If it is still locked after a restart, START FRESH/, 'a restart first, START FRESH after: ' + s.error);
+    assert.match(s.error, /Restart Agent OS to try again\. If it is still locked after a restart, START FRESH/, 'a restart first, START FRESH after: ' + s.error);
     assert.doesNotMatch(s.error, /damaged|newer Agent OS/, 'and does not call an intact file damaged');
     assert.equal(s.canStartFresh, true, 'START FRESH stays the exit for a file that is still locked after a restart');
     assert.equal(fs.readFileSync(busyFile, 'utf8'), heldBytes, 'the held store is not touched');

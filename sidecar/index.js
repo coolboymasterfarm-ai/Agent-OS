@@ -14741,7 +14741,7 @@ async function handleServiceKeyRemove(req, res) {
    (2026-09-28) had the agent promise "sign in with Google, no setup" beside a disabled GOOGLE SIGN-IN button.
    IDEMPOTENT: browse() lists one entry object under both `connectors` and its group, so a second pass must not
    prefix the early-access sentence again (the card printed it twice). */
-const EARLY_ACCESS_BLURB = 'Early access — Google has not finished verifying Agent OS yet. When Google says the app isn’t verified, choose Advanced, then Go to Agent OS. ';
+const EARLY_ACCESS_BLURB = 'Early access — Google has not finished verifying StarNet yet. When Google says the app isn’t verified, choose Advanced, then Go to StarNet. ';
 function annotateConnectorAvailability(e) {
   if (!e) return e;
   if (e.staticOauth) e.needsClient = !connectorOauthClient(e.staticOauth.authorizationServer).clientId;

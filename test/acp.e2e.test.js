@@ -1,4 +1,4 @@
-/* node test/acp.e2e.test.js — StarNet's ACP agent, end to end, as an EDITOR would drive it.
+/* node test/acp.e2e.test.js — Agent OS's ACP agent, end to end, as an EDITOR would drive it.
 
    test/acp-core.test.js proves the protocol decisions against fakes. This is the honest proof that the surface
    exists: it boots the REAL sidecar, SPAWNS the real bridge process (sidecar/acp/serve.js) exactly the way an
@@ -321,8 +321,8 @@ function makeAcpClient(port, onPermission) {
     /* ---- 5. cancel: the turn stops, resolves, and is reported as a CANCEL — not a failure -------
        The first cut accepted either 'cancelled' or 'end_turn' here, and that looseness hid a real bug: the
        cancel destroyed the socket immediately, racing ahead of the station's own settle, so the turn came back
-       as 'end_turn' with "(StarNet could not complete this turn: aborted)" AND "(stopped: the run failed inside
-       StarNet — check the station log)". Pressing Esc told the user their work had crashed. Assert the exact
+       as 'end_turn' with "(Agent OS could not complete this turn: aborted)" AND "(stopped: the run failed inside
+       Agent OS — check the station log)". Pressing Esc told the user their work had crashed. Assert the exact
        reason, and assert the failure wording is ABSENT. */
     {
       client.clear();
@@ -403,7 +403,7 @@ function makeAcpClient(port, onPermission) {
       A.ok(r.result, 'a prompt against a dead station still resolves the turn');
       const said = lonely.textFor(s.result.sessionId);
       A.ok(/could not complete this turn/.test(said), 'and says plainly that it could not run: ' + JSON.stringify(said).slice(0, 300));
-      A.ok(/StarNet is not running|not reachable/.test(said), 'naming the real cause rather than inventing an answer');
+      A.ok(/Agent OS is not running|not reachable/.test(said), 'naming the real cause rather than inventing an answer');
     } finally { lonely.kill(); await sleep(150); }
   }
 

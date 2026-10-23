@@ -19,6 +19,7 @@ const KEEP = [
   [/StarNet deliverables/, 'the real deliverables folder name on disk'],
   [/\(\?:STARNET\|SKYNET\)_/, 'env-name prefix regexes (strip/gate STARNET_*/SKYNET_*)'],
   [/MARKET_NAME\s*=|skill package\\0v1|opts\.author \|\| 'StarNet'|doc\.author \|\| 'StarNet'/, 'signed skill catalog / package digest bytes'],
+  [/EARLY_ACCESS_BLURB/, 'names the app as registered with Google; its consent screen still says StarNet until that OAuth app is renamed'],
   [/app: 'StarNet'|o\.app \|\| 'StarNet'/, 'config-export envelope stamp'],
 ];
 const SKIP_DIR = new Set(['node_modules', '.git', 'vendor', 'dist']);
