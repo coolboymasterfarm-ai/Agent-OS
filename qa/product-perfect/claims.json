@@ -2594,7 +2594,7 @@
       "surfaceLocators": [
         {
           "path": "frontend/app/windows/messaging.js",
-          "needle": "Keep StarNet running."
+          "needle": "Keep Agent OS running."
         }
       ],
       "authorityChecks": [
@@ -3628,7 +3628,7 @@
         {
           "kind": "contains",
           "path": "frontend/app/windows/messaging.js",
-          "needle": "Keep StarNet running."
+          "needle": "Keep Agent OS running."
         },
         {
           "kind": "contains",
@@ -3817,7 +3817,7 @@
         {
           "kind": "contains",
           "path": "sidecar/index.js",
-          "needle": "return json(200, { ok: false, error: 'workspace written by newer StarNet', degraded: true })"
+          "needle": "return json(200, { ok: false, error: 'workspace written by newer Agent OS', degraded: true })"
         }
       ],
       "refsChecked": [
