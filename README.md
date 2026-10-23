@@ -1,25 +1,25 @@
 <div align="center">
 
-<img src=".github/media/starnet-logo-glow.png" alt="StarNet" width="560">
+<img src="frontend/assets/brand/agent-os-logo.svg" alt="Agent OS" width="620">
 
 **A living pixel-art station where real AI agents do real work.**
 
-[![Download](https://img.shields.io/github/v/release/androoAGI/starnet-releases?label=download&color=f5a623)](https://github.com/androoAGI/starnet-releases/releases/latest)
+[![Download](https://img.shields.io/github/v/release/coolboymasterfarm-ai/Agent-OS?label=download&color=f5a623)](https://github.com/coolboymasterfarm-ai/Agent-OS/releases/latest)
 [![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-4a90d9)](INSTALL.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 [![Local-first](https://img.shields.io/badge/local--first-your%20machine%2C%20your%20data-8250df)](PRIVACY.md)
 
-[Download](https://github.com/androoAGI/starnet-releases/releases/latest) ·
+[Download](https://github.com/coolboymasterfarm-ai/Agent-OS/releases/latest) ·
 [Install guide](INSTALL.md) ·
 [Run from source](#run-from-source) ·
 [Docs](docs/INDEX.md) ·
 [Contributing](CONTRIBUTING.md)
 
-<img src=".github/media/station-iso.png" alt="The StarNet station — rooms, crew, and workstations rendered from live harness state" width="540">
+<img src=".github/media/station-iso.png" alt="The Agent OS station — rooms, crew, and workstations rendered from live harness state" width="540">
 
 </div>
 
-StarNet is a local-first desktop harness where you create AI agents, organize them into a
+Agent OS is a local-first desktop harness where you create AI agents, organize them into a
 pixel-art space station, and watch them perform real work with real models and tools. The
 station is not decoration — it is a projection of live runtime state, and the product contract
 is literal: **A room is a capability-scoped team**, **a hallway is** an authorized handoff
@@ -54,13 +54,13 @@ simulation.
 - Multiple agents run concurrently with separate workspaces and bounded permissions.
 - The visual station projects the same runtime state the harness can prove.
 
-StarNet does not simulate revenue, completed work, model activity, or spend. Its core product
+Agent OS does not simulate revenue, completed work, model activity, or spend. Its core product
 law is that **the interface must never assert state the harness cannot prove.**
 
 ## Download
 
 Desktop builds are published on the
-[StarNet releases page](https://github.com/androoAGI/starnet-releases/releases/latest).
+[Agent OS releases page](https://github.com/coolboymasterfarm-ai/Agent-OS/releases/latest).
 
 | Platform | Asset |
 | --- | --- |
@@ -164,7 +164,7 @@ reporting instructions.
 
 ## License
 
-StarNet is open source under the [MIT License](LICENSE). Third-party components remain
+Agent OS is an independent fork of [StarNet](https://github.com/androoAGI/starnet), open source under the [MIT License](LICENSE). Third-party components remain
 under their original licenses — see [NOTICE.md](NOTICE.md).
 
 **The MIT License covers the code only.** The **StarNet** name, the logo, the station artwork

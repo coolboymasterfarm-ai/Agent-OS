@@ -27,10 +27,19 @@ const path = require('node:path');
 const A = require('./_assert.js');
 
 const root = path.resolve(__dirname, '..');
-const svgPath = path.join(root, 'frontend', 'assets', 'brand', 'starnet-wordmark.svg');
-const svg = fs.readFileSync(svgPath, 'utf8');
 const css = fs.readFileSync(path.join(root, 'frontend', 'css', 'style.css'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'frontend', 'index.html'), 'utf8');
+
+// The mark is whatever .logo-img actually masks. Read the URL out of the rule instead of pinning
+// a filename, so a rebrand (or a retrace under a new name) cannot leave this harness validating an
+// asset nothing on screen uses — the exact silent drift this file exists to catch.
+const rule = (css.match(/\.logo-img\s*\{[^}]*\}/) || [])[0] || '';
+const maskUrl = (((rule.match(/mask:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/) || [])[1]) || '').trim();
+A.ok(/^\.\.\/assets\/brand\/[^/]+\.svg$/.test(maskUrl),
+  '.logo-img masks with an SVG under assets/brand (got ' + (maskUrl || 'nothing') + ')');
+const svgPath = path.resolve(path.join(root, 'frontend', 'css'), maskUrl);
+A.ok(fs.existsSync(svgPath), 'the masked wordmark exists on disk: ' + (maskUrl || 'nothing'));
+const svg = fs.readFileSync(svgPath, 'utf8');
 
 // ---- 1. the SVG is well-formed enough to survive being loaded as a mask ---------------------
 const comments = svg.match(/<!--[\s\S]*?-->/g) || [];
@@ -53,15 +62,14 @@ A.ok(/fill="currentColor"/.test(svg),
 const vb = (svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/) || []).slice(1).map(Number);
 A.ok(vb.length === 2 && vb[0] > 0 && vb[1] > 0, 'wordmark SVG declares a numeric viewBox');
 
-const rule = (css.match(/\.logo-img\s*\{[^}]*\}/) || [])[0] || '';
 A.ok(rule, 'style.css still carries a .logo-img rule');
 const ar = (rule.match(/aspect-ratio:\s*([\d.]+)\s*\/\s*([\d.]+)/) || []).slice(1).map(Number);
 A.ok(ar.length === 2, '.logo-img declares an explicit aspect-ratio (a masked <span> has no intrinsic size)');
 A.ok(Math.abs((ar[0] / ar[1]) - (vb[0] / vb[1])) < 0.002,
   `.logo-img aspect-ratio ${ar[0]}/${ar[1]} matches the SVG viewBox ${vb[0]}x${vb[1]} (retrace changed the viewBox? copy it into style.css)`);
 
-A.ok(/mask:\s*url\(\.\.\/assets\/brand\/starnet-wordmark\.svg\)/.test(rule),
-  '.logo-img masks with starnet-wordmark.svg');
+A.ok(rule.includes('mask: url(' + maskUrl + ')'),
+  '.logo-img masks with the same wordmark file this test read (' + maskUrl + ')');
 A.ok(/-webkit-mask:\s*url\(/.test(rule), '.logo-img keeps the -webkit-mask prefix alongside the standard property');
 A.ok(/background-color:\s*var\(--ph\)/.test(rule),
   '.logo-img paints var(--ph) so the mark re-tints with the theme instead of being a fixed colour');
