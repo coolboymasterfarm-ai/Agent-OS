@@ -935,7 +935,9 @@
               // Commander past the lead's end instead of being denied by it, and still fail closed on the consent timeout
               detachedConsent: o2.background === true,
               extraObjects: kitFor(job.builder, job.team),   // + the LENT BUILDER (builder:true) and, for a team manager, the LENT TEAM LEAD
-              maxCostUsd: perWorker,           // a runaway worker can't blow the lead's per-run ceiling
+              // a runaway worker can't blow the lead's per-run ceiling; a team manager's run gets its slice of the team limit
+              maxCostUsd: (job.team && Teams.perRunUsd(job.team)) || perWorker,
+              teamPerRunUsd: job.team ? (Teams.perRunUsd(job.team) || undefined) : undefined,   // ...and its members get the same slice (index.js perWorker)
               maxIters: bounded ? lowerPositive(workerMaxIters, bounded.workerMaxIters) : workerMaxIters,
               maxToolCalls: bounded ? bounded.workerMaxTools : undefined,
               steer: typeof o2.steer === 'function' ? o2.steer : undefined

@@ -9,6 +9,7 @@ const T = require('../sidecar/teams.js');
 const { makeOrchestrationTools } = require('../sidecar/tools/builtin/orchestration.js');
 const { CAP_REGISTRY } = require('../sidecar/capability/registry.js');
 const { resolveTools } = require('../sidecar/capability/resolve.js');
+const IDX = fs.readFileSync(path.join(__dirname, '..', 'sidecar', 'index.js'), 'utf8');
 
 /* ---------- pure helpers ---------- */
 const teams = T.normalizeTeams({ teams: [
@@ -27,12 +28,49 @@ A.eq(T.teamOfManager(teams, 'e1'), null, 'a member is not a manager');
 A.eq([...T.scopeRoster(new Map([['e1', {}], ['e2', {}], ['zzz', {}]]), ['e1', 'e2'])].map(r => r[0]), ['e1', 'e2'], 'scopeRoster keeps members only');
 A.ok(/CONTENT CHECK/.test(T.managerBrief(teams[0])) && /Engineering team/.test(T.managerBrief(teams[0])), 'the manager brief names the team and the content check');
 
-/* ---------- the registry slice is narrow and never swept in ---------- */
+/* ---------- checkTeams: the strict gate for a save from the TEAMS window ---------- */
+{
+  const known = new Set(['foreman', 'e1', 'e2', 'q1']);
+  const t = o => Object.assign({ id: 'eng', name: 'Engineering', managerId: 'foreman', memberIds: ['e1'] }, o);
+  const why = (list, k) => { const r = T.checkTeams(list, k || known); return r.ok ? 'OK' : r.error; };
+  A.eq(why([t()]), 'OK', 'a good team passes');
+  A.eq(why([]), 'OK', 'no teams is a legitimate list');
+  A.ok(/needs a name/.test(why([t({ name: ' ' })])), 'a nameless team is refused');
+  A.ok(/needs a manager/.test(why([t({ managerId: '' })])), 'a team with no manager is refused');
+  A.ok(/Ultron/.test(why([t({ managerId: 'agent' })])), 'Ultron cannot manage');
+  A.ok(/manager is not on your crew/.test(why([t({ managerId: 'ghost' })])), 'an unknown manager is refused');
+  A.ok(/ghost is not on your crew/.test(why([t({ memberIds: ['e1', 'ghost'] })])), 'an unknown member is refused by name');
+  A.ok(/at least one member/.test(why([t({ memberIds: ['foreman'] })])), 'a manager alone is not a team');
+  A.ok(/already leads/.test(why([t(), t({ id: 'qa', name: 'QA', memberIds: ['q1'] })])), 'a manager leads one team');
+  A.eq(why([t(), t({ id: 'qa', name: 'QA', managerId: 'e2', memberIds: ['e1'] })]), 'OK', 'an agent may be on several teams');
+  A.ok(/share the id/.test(why([t(), t({ managerId: 'e2' })])), 'two teams cannot share an id');
+  A.ok(/spend limit/.test(why([t({ budgetUsd: -1 })])) && /spend limit/.test(why([t({ budgetUsd: 5000 })])), 'a spend limit outside 0-1000 is refused');
+  A.ok(/must be a list/.test(why(null)), 'a non-list is refused');
+  const full = T.normalizeTeams([t({ emoji: '🛠', color: '#33AAFF', instructions: ' tests first ', budgetUsd: '4.256' })])[0];
+  A.eq([full.emoji, full.color, full.instructions, full.budgetUsd], ['🛠', '#33aaff', 'tests first', 4.26], 'look, orders and spend limit are normalized');
+  A.eq(T.normalizeTeams([t({ color: 'red', budgetUsd: 'x' })])[0].color + '|' + T.normalizeTeams([t({ budgetUsd: 'x' })])[0].budgetUsd, '|0', 'a bad color or limit falls back to none');
+  A.eq(T.perRunUsd({ budgetUsd: 3, memberIds: ['a', 'b'] }), 1, 'a team limit is split evenly over the manager and each member');
+  A.eq(T.perRunUsd({ budgetUsd: 0, memberIds: ['a'] }), 0, 'no team limit means no team cap');
+  A.ok(/TEAM STANDING ORDERS[\s\S]*tests first/.test(T.managerBrief(full)) && !/STANDING ORDERS/.test(T.managerBrief(Object.assign({}, full, { instructions: '' }))), 'the standing orders ride the manager brief only when set');
+}
+
+/* ---------- the TEAMS window is wired in ---------- */
+{
+  const rd = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const html = rd('frontend/index.html'), win = rd('frontend/app/windows/teams.js');
+  A.ok(/registerWindow\('teams', 'TEAMS'/.test(win), 'the TEAMS window registers itself');
+  A.ok(html.includes('<script src="app/windows/teams.js">') && html.indexOf('app/windows/teams.js') > html.indexOf('app/stationui.js'), 'the window loads after stationui.js');
+  A.ok(/data-term="teams"/.test(html), 'the menu has a TEAMS door');
+  A.ok(/fetch\('\/api\/teams'/.test(win) && /App\.openSummonBay/.test(win), 'the window reads and saves /api/teams and can open the recruiting bay');
+  A.ok(/\{ m: \['GET', 'POST'\], exact: '\/api\/teams'/.test(IDX), 'the sidecar serves /api/teams');
+  A.ok(!/\.innerHTML\s*=\s*[^;]*\+\s*(msg|t\.name|d\.name)\b[^;]*;/.test(win.replace(/esc\([^)]*\)/g, '')), 'no unescaped name or message reaches innerHTML');
+}
+
+/* ---------- registry slice is narrow and never swept in ---------- */
 A.eq(CAP_REGISTRY.teamlead.map(g => g.tool), ['team.dispatch', 'team.subagents'], 'teamlead lends dispatch + status and nothing else');
 A.ok(CAP_REGISTRY.teamlead.every(g => g.capId === 'orchestrator'), 'teamlead shares the orchestrator capId so the TASK DELEGATION switch covers it');
 const lent = resolveTools('foreman', { agents: { foreman: { id: 'foreman', room: 'r' } }, rooms: { r: { id: 'r', objects: [{ instanceId: 't', objectType: 'teamlead' }] } } }).tools;
 A.ok(lent.includes('team.dispatch') && !lent.some(t => /summon|spawn|routine|station\./.test(t)), 'a lent team lead can dispatch but not summon, spawn, schedule or run the station');
-const IDX = fs.readFileSync(path.join(__dirname, '..', 'sidecar', 'index.js'), 'utf8');
 A.ok(/const LENT = \['builder', 'teamlead'\];/.test(IDX) && /!LENT\.includes\(objectType\)/.test(IDX), 'the full-power sweep never confers teamlead on everyone');
 
 /* ---------- team.dispatch: Ultron -> manager -> members ---------- */
@@ -78,6 +116,20 @@ const objTypes = c => (c.extraObjects || []).map(x => x.objectType);
     const { dispatchTool } = makeOrchestrationTools({ runOnce: ro, roster: () => roster, key: 'k', model: 'm', perWorker: 1, newId: () => 'n' });
     await dispatchTool.run({ workers: [{ agentId: 'foreman', prompt: 'x' }] }, ctx);
     A.ok(!objTypes(ro.calls[0]).includes('teamlead') && ro.calls[0].teamScope === undefined, 'with no teams wired the dispatch is unchanged');
+  }
+  // a team spend limit: the manager's run and every member run each get an equal slice
+  {
+    const ro = fakeRunOnce();
+    const budgeted = () => [{ id: 'eng', name: 'Engineering', managerId: 'foreman', memberIds: ['e1', 'e2'], budgetUsd: 3, instructions: 'tests first' }];
+    const { dispatchTool } = makeOrchestrationTools({ runOnce: ro, roster: () => roster, key: 'k', model: 'm', perWorker: 9, newId: () => 'n', teams: budgeted });
+    await dispatchTool.run({ workers: [{ agentId: 'foreman', prompt: 'x' }] }, ctx);
+    A.eq(ro.calls[0].maxCostUsd, 1, 'the manager run is capped at its slice of the team limit');
+    A.eq(ro.calls[0].teamPerRunUsd, 1, 'and its members are told the same slice');
+    A.ok(/tests first/.test(ro.calls[0].system), 'the team standing orders reach the manager run');
+    const ro2 = fakeRunOnce();
+    const { dispatchTool: d2 } = makeOrchestrationTools({ runOnce: ro2, roster: () => roster, key: 'k', model: 'm', perWorker: 1, newId: () => 'n', teams: budgeted, teamScope: ['e1', 'e2'] });
+    await d2.run({ workers: [{ agentId: 'e1', prompt: 'x' }] }, Object.assign({}, ctx, { agentId: 'foreman' }));
+    A.eq(ro2.calls[0].maxCostUsd, 1, 'a member run carries the per-run slice the host passes down (perWorker)');
   }
   // the shipped seed
   {

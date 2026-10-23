@@ -213,6 +213,7 @@ test/checkpoint-git.test.js
 test/checkpoint-maintenance.e2e.test.js
 test/checkpoint-stale-lock.e2e.test.js
 test/crew-call.http.test.js
+test/teams.http.test.js
 test/legacy-spend-provenance.http.test.js
 test/ledger-damaged-line.http.test.js
 
