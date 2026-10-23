@@ -21,7 +21,7 @@
   const KEYBOARD_ACTIONS = ['type', 'key', 'hotkey'];
   // The harness's own window (desktop shell exe or a browser tab titled AGENT OS). Typing into it is never the
   // intent — it means the target app lost focus (the 2026-07-08 "typed the song into its own chat box" incident).
-  const SELF_WINDOW_RE = /starnet/i;
+  const SELF_WINDOW_RE = /starnet|agent os/i;
   /* AGENT OS IS NEVER DRIVEN THROUGH THE SCREEN (2026-10-13). Asked in a group chat to configure a conveyor, a lead with no
      station tools spent 21 minutes clicking Agent OS's own Workflow panel (~110 screenshot→click round trips) and then
      scripted keystrokes at the Agent OS window — while station.plan/build does the same job in the background behind one
@@ -30,7 +30,7 @@
      shell that spawned this sidecar (selfPids) or its exe name — and, for Agent OS open in a browser tab, its title. */
   const POINTER_ACTIONS = ['click', 'double_click', 'drag'];
   const SELF_PROCESS_RE = /^skynet-desktop(.exe)?$/i;
-  const SELF_TITLE_RE = /^starnet(?![w.])/i;
+  const SELF_TITLE_RE = /^(?:starnet|agent os)(?![w.])/i;
   const SELF_DRIVE_HELP = 'never operate Agent OS through the screen: its own tools change it in the background while the Commander keeps working. '
     + 'Read assembly lines with station.layout; tool_search "station builder" for station.map, station.plan, station.build, station.test_line and station.start_line; '
     + 'tool_search "station settings" for settings. If those tools are not in your list, tell the Commander which change you need instead.';
@@ -124,7 +124,7 @@
       let win;
       try { win = await p.read(); }
       catch (e) { throw new Error('refused: could not confirm ' + p.where + ' is not Agent OS (' + String((e && e.message) || e).slice(0, 160) + ') — input was NOT sent'); }
-      if (isSelfWindow(win, selfPids)) throw new Error('refused: ' + p.where + ' is StarNet itself ("' + String((win && (win.title || win.process)) || 'StarNet') + '"), so input was NOT sent — ' + SELF_DRIVE_HELP);
+      if (isSelfWindow(win, selfPids)) throw new Error('refused: ' + p.where + ' is Agent OS itself ("' + String((win && (win.title || win.process)) || 'Agent OS') + '"), so input was NOT sent — ' + SELF_DRIVE_HELP);
     }
   }
   function win32DriverRequested(env) {
