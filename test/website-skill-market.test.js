@@ -21,7 +21,7 @@ const html = read('market.html');
 const js = read('market.js');
 
 // ---- the page ----
-A.ok(/<title>Skill Market — StarNet<\/title>/.test(html), 'the page has its own title');
+A.ok(/<title>Skill Market — Agent OS<\/title>/.test(html), 'the page has its own title');
 A.ok(/<link rel="canonical" href="https:\/\/starnetos\.com\/market\.html">/.test(html), 'and a canonical URL');
 A.ok(!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html), 'no inline <script> (the CSP forbids it)');
 A.ok(!/\son[a-z]+\s*=/i.test(html), 'no inline event handlers');

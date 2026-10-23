@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connectors &amp; MCP reference — StarNet Docs</title>
-<meta name="description" content="StarNet built-in capabilities, MCP connectors, isolated local stdio servers, messaging channels, and harness interoperability.">
+<title>Connectors &amp; MCP reference — Agent OS Docs</title>
+<meta name="description" content="Agent OS built-in capabilities, MCP connectors, isolated local stdio servers, messaging channels, and harness interoperability.">
 <link rel="canonical" href="https://starnetos.com/docs/connectors.html">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="docs.css?v=20260913-brand-nav">
@@ -16,7 +16,7 @@
 <div class="crt-vignette" aria-hidden="true"></div>
 
 <header class="topbar" id="topbar">
-  <a class="brand" href="../index.html" aria-label="StarNet home"><img src="../assets/starnet-logo-small.png" alt="StarNet" width="355" height="60"></a>
+  <a class="brand" href="../index.html" aria-label="Agent OS home"><img src="../assets/starnet-logo-small.png" alt="Agent OS" width="355" height="60"></a>
   <nav class="topnav" aria-label="Site">
     <a href="../index.html#station">Product</a>
     <a href="index.html" class="on">Docs</a>
@@ -117,12 +117,12 @@ resulting cookies live in the station's browser profile, so later runs stay sign
 ever having handled your credentials.</p>
 
 <h2 id="mcp-connectors">MCP connectors</h2>
-<p>StarNet speaks <b>Model Context Protocol</b>. A curated connector catalog covers popular
+<p>Agent OS speaks <b>Model Context Protocol</b>. A curated connector catalog covers popular
 services with one-click setup; connectors that need auth use <b>OAuth 2.1 dynamic client
 registration</b> or a pasted key. Any third-party <b>remote http(s)</b> MCP server can be added by
 URL — your agents' reach grows with the ecosystem, not with our release schedule.</p>
 <p>Local <code>stdio</code> servers (<code>npx …</code>, <code>uvx …</code>) are supported only through
-an agent-owned <b>SAFE CELL</b>. StarNet probes Docker before connecting, runs the server inside that
+an agent-owned <b>SAFE CELL</b>. Agent OS probes Docker before connecting, runs the server inside that
 isolated cell, keeps connector secrets out of process arguments, and never falls back to spawning the
 server directly on your host. If no real Safe Cell agent exists, the local-server route is unavailable
 rather than pretending the process is isolated.</p>
@@ -134,7 +134,7 @@ and substituted without the model ever seeing it, unattended use, and what each 
 <p>Connect <b>Telegram</b>, <b>Discord</b>, <b>Slack</b>, <b>Matrix</b>, or <b>Signal</b> and your
 agents can report to you — and take tasking from you — where you already are. Scheduled and
 Autonomy runs can deliver their results straight to a channel. Matrix talks to whatever
-homeserver you point it at, and Signal talks to a signal-cli bridge you run yourself; StarNet
+homeserver you point it at, and Signal talks to a signal-cli bridge you run yourself; Agent OS
 never picks the server for you.</p>
 <p>Outbound messages are a capability like any other: an agent can only write to a chat someone
 has <b>already opened with this station</b>, never to an arbitrary address it decides on.</p>
@@ -147,9 +147,9 @@ nowhere near the machine. The station is still doing the work locally; Telegram 
 window you're looking through.</p>
 
 <h2 id="harness-interop">Harness interop</h2>
-<p>Already run Claude Code, or another agent harness? StarNet exposes an <b>MCP stdio bridge</b>
-and an OpenAI-style ingress endpoint, so other tools can drive StarNet capabilities — and
-StarNet agents can sit alongside the harnesses you already use instead of replacing them.
+<p>Already run Claude Code, or another agent harness? Agent OS exposes an <b>MCP stdio bridge</b>
+and an OpenAI-style ingress endpoint, so other tools can drive Agent OS capabilities — and
+Agent OS agents can sit alongside the harnesses you already use instead of replacing them.
 Your station becomes shared infrastructure, not another silo.</p>
 
 <h2 id="local-by-default">Local by default</h2>
@@ -162,7 +162,7 @@ Settings.</p>
 </div>
 
 <footer class="footer">
-  <div class="footer-line">STARNET &middot; a living station of AI agents, doing real work in the dark</div>
+  <div class="footer-line">AGENT OS &middot; a living station of AI agents, doing real work in the dark</div>
   <div class="footer-links">
     <a href="../index.html">HOME</a>
     <a href="https://github.com/androoAGI/starnet" target="_blank" rel="noopener">GITHUB</a>
@@ -176,7 +176,7 @@ Settings.</p>
     <a href="../legal/terms.html">TERMS</a>
     <a href="mailto:androo.agi@gmail.com">CONTACT</a>
   </div>
-  <div class="footer-fine">MIT license &middot; &copy; <span id="year">2026</span> StarNet &middot; no telemetry, no tracking &mdash; <a href="../legal/privacy.html">we collect nothing</a></div>
+  <div class="footer-fine">MIT license &middot; &copy; <span id="year">2026</span> Agent OS &middot; no telemetry, no tracking &mdash; <a href="../legal/privacy.html">we collect nothing</a></div>
 </footer>
 
 <script src="search-index.js?v=20260913-brand-nav"></script>

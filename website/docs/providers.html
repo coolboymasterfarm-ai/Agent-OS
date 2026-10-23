@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Models &amp; providers — StarNet Docs</title>
-<meta name="description" content="Model providers supported by StarNet, including API-key, account sign-in, local, and custom OpenAI-compatible options.">
+<title>Models &amp; providers — Agent OS Docs</title>
+<meta name="description" content="Model providers supported by Agent OS, including API-key, account sign-in, local, and custom OpenAI-compatible options.">
 <link rel="canonical" href="https://starnetos.com/docs/providers.html">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="docs.css?v=20260913-brand-nav">
@@ -16,7 +16,7 @@
 <div class="crt-vignette" aria-hidden="true"></div>
 
 <header class="topbar" id="topbar">
-  <a class="brand" href="../index.html" aria-label="StarNet home"><img src="../assets/starnet-logo-small.png" alt="StarNet" width="355" height="60"></a>
+  <a class="brand" href="../index.html" aria-label="Agent OS home"><img src="../assets/starnet-logo-small.png" alt="Agent OS" width="355" height="60"></a>
   <nav class="topnav" aria-label="Site">
     <a href="../index.html#station">Product</a>
     <a href="index.html" class="on">Docs</a>
@@ -88,7 +88,7 @@
 <p class="doc-sub">Connect a model account, API key, or local endpoint.</p>
 
 <h2 id="bring-your-own-key-byok">Bring your own key (BYOK)</h2>
-<p>StarNet talks to models through <b>your</b> credentials. The simplest path is an
+<p>Agent OS talks to models through <b>your</b> credentials. The simplest path is an
 <a href="https://openrouter.ai" target="_blank" rel="noopener">OpenRouter</a> API key: one key,
 hundreds of models, transparent per-token pricing. Paste it once in Settings and every agent can
 use any model you allow.</p>
@@ -106,16 +106,16 @@ OpenAI-compatible wire format.</li>
 <div class="callout"><b>Release note:</b> these docs track current source. The stable installer linked
 from the site can lag while the next Windows and macOS builds pass signing and notarization.</div>
 
-<h2 id="starnet-account">StarNet account</h2>
-<p>If <b>STARNET</b> is offered on the first-run connection screen, select it and choose
-<b>CONNECT STARNET ACCOUNT</b>. Confirm the short code in your browser, then return to the
+<h2 id="starnet-account">Agent OS account</h2>
+<p>If <b>AGENT OS</b> is offered on the first-run connection screen, select it and choose
+<b>CONNECT AGENT OS ACCOUNT</b>. Confirm the short code in your browser, then return to the
 app and check its connection status before continuing.</p>
 
 <h2 id="model-choice-and-account-plans">Model choice and account plans</h2>
 <p>Change an individual agent&rsquo;s model in <b>CREW &rsaquo; AGENTS</b>, in its dossier.
 Reasoning effort, when supported by that model, is a separate control; <b>MAX</b> is an effort
 setting, not a subscription plan. A model&rsquo;s tier badge is an editorial rating, not an account entitlement.</p>
-<p>The model picker&rsquo;s <b>STARNET SUBSCRIPTION</b> link opens the pricing page in your browser. In the
+<p>The model picker&rsquo;s <b>AGENT OS SUBSCRIPTION</b> link opens the pricing page in your browser. In the
 app&rsquo;s <b>STORE</b>, <b>ADD CREDITS</b> and, when shown for an existing subscription,
 <b>MANAGE PLAN</b> also open your browser. These account actions are separate from model selection
 and from installing app updates through <b>Update Center</b>.</p>
@@ -128,18 +128,18 @@ machine only when an agent actually runs.</p>
 <h2 id="service-keys-the-keys-tab">Service keys (the KEYS tab)</h2>
 <p>Beyond model providers, agents sometimes need platform keys to do real work — a Stripe test
 key, a GitHub token, a search API key. The <b>KEYS</b> tab lets you paste any service key;
-StarNet exposes it to agent runs as an environment variable and tells the agent only the
+Agent OS exposes it to agent runs as an environment variable and tells the agent only the
 <b>name</b> of what's available, never the value. The key itself never enters the model prompt.</p>
 
 <h2 id="cost-honesty">Cost honesty</h2>
-<p>SETTINGS &rsaquo; SPENDING LIMITS shows what you have spent. Runs on StarNet credits and runs on your own provider key are billed separately. If a run stopped before StarNet recorded what it cost, it is listed there as <b>INTERRUPTED</b>. If StarNet also didn't record which account paid for it, the row says <b>BILLING SOURCE UNKNOWN</b>. StarNet never guesses the amount: enter the verified charge and press <b>SETTLE</b>. If you set a spending limit yourself, paid runs are refused until those runs are settled.</p>
+<p>SETTINGS &rsaquo; SPENDING LIMITS shows what you have spent. Runs on Agent OS credits and runs on your own provider key are billed separately. If a run stopped before Agent OS recorded what it cost, it is listed there as <b>INTERRUPTED</b>. If Agent OS also didn't record which account paid for it, the row says <b>BILLING SOURCE UNKNOWN</b>. Agent OS never guesses the amount: enter the verified charge and press <b>SETTLE</b>. If you set a spending limit yourself, paid runs are refused until those runs are settled.</p>
 
 <nav class="doc-pager" aria-label="More in Start here"><a class="pg prev" href="getting-started.html"><span class="pg-k">&larr; PREVIOUS</span><span class="pg-t">Install &amp; first task</span></a><a class="pg next" href="index.html#start"><span class="pg-k">Explore this topic &rarr;</span><span class="pg-t">Start here</span></a></nav>
   </main>
 </div>
 
 <footer class="footer">
-  <div class="footer-line">STARNET &middot; a living station of AI agents, doing real work in the dark</div>
+  <div class="footer-line">AGENT OS &middot; a living station of AI agents, doing real work in the dark</div>
   <div class="footer-links">
     <a href="../index.html">HOME</a>
     <a href="https://github.com/androoAGI/starnet" target="_blank" rel="noopener">GITHUB</a>
@@ -153,7 +153,7 @@ StarNet exposes it to agent runs as an environment variable and tells the agent 
     <a href="../legal/terms.html">TERMS</a>
     <a href="mailto:androo.agi@gmail.com">CONTACT</a>
   </div>
-  <div class="footer-fine">MIT license &middot; &copy; <span id="year">2026</span> StarNet &middot; no telemetry, no tracking &mdash; <a href="../legal/privacy.html">we collect nothing</a></div>
+  <div class="footer-fine">MIT license &middot; &copy; <span id="year">2026</span> Agent OS &middot; no telemetry, no tracking &mdash; <a href="../legal/privacy.html">we collect nothing</a></div>
 </footer>
 
 <script src="search-index.js?v=20260913-brand-nav"></script>
