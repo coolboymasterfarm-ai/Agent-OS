@@ -11649,6 +11649,7 @@ const ROUTES = [
   { m: 'POST', exact: '/api/channels/telegram/owner/pair', h: handleTelegramOwnerPair },
   { m: 'POST', exact: '/api/channels/telegram/owner/revoke', h: handleTelegramOwnerRevoke },
   { m: 'POST', exact: '/api/roster', h: handleRoster },
+  { m: ['GET', 'POST'], exact: '/api/teams', h: handleTeams },   // TEAMS window: managers + members, see sidecar/teams.js
   { m: 'POST', exact: '/api/agent/delete', h: handleAgentDelete },
   { m: 'POST', exact: '/api/dossier', h: handleDossier },
   { m: 'POST', exact: '/api/goals', h: handleGoals },   // GROWTH Tier 2: the active goal-arc summary for cron personas
@@ -18212,6 +18213,21 @@ async function handleSubagentSteer(req, res) {
   catch (e) { json(400, { ok: false, error: (e && e.message) || String(e) }); }
 }
 
+// GET /api/teams -> { teams }; POST /api/teams { teams:[...] } replaces the whole list (the TEAMS window sends it all). Unlike the roster, an
+// empty list is a legitimate "no teams". A team that cannot work is refused with the reason (teams.js checkTeams), never silently dropped.
+async function handleTeams(req, res) {
+  const json = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
+  if (req.method === 'GET') return json(200, { teams: loadTeams() });
+  let body;
+  try { body = JSON.parse(await readBody(req, 256 << 10, res)); }
+  catch (e) { if (res.headersSent) return; return json(400, { ok: false, error: 'bad json' }); }
+  if (workspaceDegraded) return json(200, { ok: false, error: 'workspace written by newer Agent OS', degraded: true });
+  const checked = require('./teams.js').checkTeams(body && body.teams, new Set(agentRoster.keys()));
+  if (!checked.ok) return json(400, { ok: false, error: checked.error });
+  try { saveResilient(TEAMS_FILE, { version: 1, teams: checked.teams }); }
+  catch (e) { console.warn('[teams] persist failed:', (e && e.message) || e); return json(500, { ok: false, error: 'could not save teams' }); }
+  return json(200, { ok: true, teams: checked.teams });
+}
 async function handleRoster(req, res) {
   const json = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
   let body;
@@ -20562,7 +20578,7 @@ async function runOnceCore(o) {
     // prompt states what will actually happen. A thunk read off the live roster: computed at dispatch time, and
     // deliberately NOT reusing `agentFullAccess` (declared further down) so this stays order-independent.
     approvalPosture: () => (!hostPowerWithheldFor(o) && (FULL_ACCESS || ((agentRoster.get(agentId) || {}).approvalMode === 'full'))) ? 'full' : 'ask',
-    perWorker: ORCH_PER_WORKER, workerMaxIters: ORCH_WORKER_MAX_ITERS, newId: () => crypto.randomUUID(),
+    perWorker: Number(o.teamPerRunUsd) > 0 ? Number(o.teamPerRunUsd) : ORCH_PER_WORKER, workerMaxIters: ORCH_WORKER_MAX_ITERS, newId: () => crypto.randomUUID(),
     dispatchTimeoutMs: ORCH_DISPATCH_TIMEOUT_MS,   // minutes, not the 30s fast-tool cap (see constant)
     // Saved session metadata is available headlessly; visual delivery still uses
     // the page bridge and recovers from the durable run ledger on reconnect.
