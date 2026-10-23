@@ -4,10 +4,10 @@
 # creates the source release draft-first so a failed copy can never expose a partial release.
 name: sync-source-release
 
+# AGENT OS: the 15-minute schedule is OFF. This repo publishes its OWN updates (agent-os-update.yml); mirroring
+# upstream StarNet releases here would mark them "latest" and hijack every installed Agent OS's update feed.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "7,22,37,52 * * * *"
 
 permissions:
   contents: write

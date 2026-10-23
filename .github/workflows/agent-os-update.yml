@@ -1,0 +1,153 @@
+# AGENT OS — build + publish an update every time new code lands on main.
+#
+# What it does, end to end:
+#   1. A push to main (merging a PR counts) starts this workflow. Docs-only changes are skipped.
+#   2. It builds the signed Windows installer with the house release script (scripts/release-cut.mjs),
+#      signed with YOUR updater key (secret AGENT_OS_UPDATER_KEY), never the upstream StarNet key.
+#   3. It publishes a GitHub Release on THIS repo, marked "latest", carrying the installer, its .sig and
+#      latest.json. Every installed Agent OS polls
+#        https://github.com/<this repo>/releases/latest/download/latest.json
+#      (src-tauri/tauri.conf.json), so the Update Center sees it on the next check and installs it.
+#
+# Versions: in-tree a.b.c publishes as a.(b+1).<run number>. The run number only grows, so every publish is
+# strictly newer than the last and the updater always moves forward.
+#
+# One-time setup (docs/AGENT-OS-UPDATES.md has it step by step):
+#   AGENT_OS_UPDATER_KEY     the private updater key file's contents (generated with NO password)
+#   AGENT_OS_UPDATER_PUBKEY  the matching .pub file's contents — baked into every build you ship
+# Without them this workflow stops at the first step and says exactly what to add.
+
+name: agent-os-update
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'website/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# one release at a time; a newer push waits rather than racing the "latest" pointer
+concurrency:
+  group: agent-os-update
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      STARNET_RELEASES_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check the updater key is set up
+        shell: pwsh
+        env:
+          KEY: ${{ secrets.AGENT_OS_UPDATER_KEY }}
+          PUB: ${{ secrets.AGENT_OS_UPDATER_PUBKEY }}
+        run: |
+          if (-not $env:KEY -or -not $env:PUB) {
+            Write-Host "::error title=Updater key missing::Add the repo secrets AGENT_OS_UPDATER_KEY and AGENT_OS_UPDATER_PUBKEY (Settings > Secrets and variables > Actions). Step-by-step: docs/AGENT-OS-UPDATES.md"
+            exit 1
+          }
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Point the build at this repo and your key
+        shell: pwsh
+        env:
+          PUB: ${{ secrets.AGENT_OS_UPDATER_PUBKEY }}
+        run: |
+          node -e "const fs=require('fs');const p='src-tauri/tauri.conf.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));c.plugins.updater.pubkey=process.env.PUB.trim();c.plugins.updater.endpoints=['https://github.com/'+process.env.STARNET_RELEASES_REPO+'/releases/latest/download/latest.json'];fs.writeFileSync(p,JSON.stringify(c,null,2)+'\n')"
+
+      - name: Pick the next version
+        id: ver
+        shell: pwsh
+        run: |
+          $cur = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          $p = $cur.Split('.')
+          $v = "$($p[0]).$([int]$p[1] + 1).${{ github.run_number }}"
+          git config user.name "agent-os-update"
+          git config user.email "agent-os-update@users.noreply.github.com"
+          # bumps every version pin in lockstep (package.json, lockfile, tauri.conf, Cargo.toml, Cargo.lock); local commit only
+          node scripts/release-bump.mjs $v --no-tag
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Release notes from what was merged
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          $subject = git log -1 --format=%s ${{ github.sha }}
+          Set-Content -Path RELEASE_NOTES.md -Value "# Agent OS $v`n`n- $subject`n"
+
+      - name: Build + sign the installer
+        shell: pwsh
+        env:
+          KEY: ${{ secrets.AGENT_OS_UPDATER_KEY }}
+        run: |
+          $keyFile = Join-Path $env:RUNNER_TEMP 'agent-os-updater.key'
+          Set-Content -NoNewline -Path $keyFile -Value $env:KEY.Trim()
+          $env:STARNET_UPDATER_KEY_FILE = $keyFile
+          $env:TAURI_SIGNING_PRIVATE_KEY = $env:KEY.Trim()
+          $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ''
+          npm run release:cut
+          $code = $LASTEXITCODE
+          Remove-Item $keyFile -Force -ErrorAction SilentlyContinue
+          exit $code
+
+      - name: Publish the release (marked latest)
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          $files = @("release/StarNet_${v}_x64-setup.exe", "release/StarNet_${v}_x64-setup.exe.sig", "release/latest.json")
+          gh release view "v$v" --repo $env:STARNET_RELEASES_REPO *> $null
+          if ($LASTEXITCODE -eq 0) {
+            # a re-run of the same build: replace the assets instead of failing on the existing tag
+            gh release upload "v$v" --repo $env:STARNET_RELEASES_REPO --clobber @files
+          } else {
+            gh release create "v$v" --repo $env:STARNET_RELEASES_REPO --target ${{ github.sha }} `
+              --title "Agent OS $v" --notes-file RELEASE_NOTES.md --latest @files
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Confirm installed apps can see it
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          $url = "https://github.com/$env:STARNET_RELEASES_REPO/releases/latest/download/latest.json"
+          for ($i = 0; $i -lt 10; $i++) {
+            try {
+              $m = Invoke-RestMethod -Uri $url -Headers @{ 'Cache-Control' = 'no-cache' }
+              if ($m.version -eq $v) { Write-Host "Update feed now serves $v"; exit 0 }
+              Write-Host "feed still shows $($m.version); retrying"
+            } catch { Write-Host "feed not reachable yet: $_" }
+            Start-Sleep -Seconds 15
+          }
+          Write-Host "::error::The update feed did not show $v. Check the release is published and marked Latest."
+          exit 1
+
+      - name: Keep the build (also on failure, for debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-os-${{ steps.ver.outputs.version || 'unversioned' }}
+          path: release/
+          if-no-files-found: ignore
