@@ -180,7 +180,7 @@ function hermetic(profile) {
 
       const d = await cli(['doctor', '--port', String(port)], attachEnv);
       A.eq(d.code, 0, 'doctor exits 0');
-      A.ok(/StarNet diagnostics/.test(d.out) && /Credential:\s+configured/.test(d.out), 'doctor prints the static diagnostics report');
+      A.ok(/Agent OS diagnostics/.test(d.out) && /Credential:\s+configured/.test(d.out), 'doctor prints the static diagnostics report');
       A.ok(d.out.indexOf('sk-or-v1') < 0, 'doctor never prints a key');
     }
 

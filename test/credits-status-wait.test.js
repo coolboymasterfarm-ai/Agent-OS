@@ -20,7 +20,7 @@ const slice = (src, from, to) => {
   return src.slice(a, b);
 };
 const apiCode = slice(harnessSrc, '  async function requestJson(', '\n  // ONE fold point') + '\nthis.api = api;';
-const wakeCode = slice(appSrc, '  let starnetLinked = false;', '  // A station can be linked to a DIFFERENT StarNet login') + '\nthis.wake = { refreshStarnetGenesisStatus, revealStarnetGenesis };';
+const wakeCode = slice(appSrc, '  let starnetLinked = false;', '  // A station can be linked to a DIFFERENT Agent OS login') + '\nthis.wake = { refreshStarnetGenesisStatus, revealStarnetGenesis };';
 const storeCode = slice(stationuiSrc, '  let _creditsLinkPoll =', '  // BUDGET panel') + '\nthis.store = { wireCredits };';
 const provCode = slice(stationuiSrc, '  let creditsProv = {', '  // The rows CONNECTIONS should actually draw') + '\nthis.prov = { refreshCreditsProvider };';
 // the STORE reads through the same shared, repaint-proof credits read the provider card uses (live walk 10-14)
@@ -144,10 +144,10 @@ const ok = (cond, msg) => { assert.ok(cond, msg); n++; };
     ok(s.painted.length === 1 && s.painted[0].what === 'unavailable', 'STORE: a read that never answers still ends in the honest "could not check" card');
     ok(s.seen.aborted === 1, 'STORE: the hung request is aborted');
   }
-  // 4. the genesis reveal (is there a STARNET chip at all?) reads the same path: a slow heal must not hide a linked account
+  // 4. the genesis reveal (is there an AGENT OS chip at all?) reads the same path: a slow heal must not hide a linked account
   {
     const w = await wake(16000, { reveal: true, picked: 'openai' });
-    ok(w.result === true && !w.chip.classList.contains('hidden'), 'GENESIS: a 16s healing answer still reveals the STARNET chip for a linked station');
+    ok(w.result === true && !w.chip.classList.contains('hidden'), 'GENESIS: a 16s healing answer still reveals the AGENT OS chip for a linked station');
     ok(w.seen.aborted === 0 && w.seen.routes[0] === '/api/credits?history=0', 'GENESIS: the reveal waited out the heal on the summary read');
   }
   // 5. the SETTINGS provider card: a slow heal paints LINKED with the real balance, never "not linked" / hidden

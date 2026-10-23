@@ -1,6 +1,6 @@
-# Contributing to StarNet
+# Contributing to Agent OS
 
-Thanks for helping improve StarNet. Bug fixes, tests, documentation, accessibility work, and
+Thanks for helping improve Agent OS. Bug fixes, tests, documentation, accessibility work, and
 carefully scoped features are welcome.
 
 ## Before you start

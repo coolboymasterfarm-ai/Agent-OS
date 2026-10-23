@@ -66,9 +66,9 @@ test('the desk card: a glance line in the phrase, the whole request in INSPECT',
   /* THE CARD SAYS WHO GETS WHAT (rc walk 10-14: "NOVA wants to hand work to COPY and STRATEGY", the tasks raw JSON under
      Inspect). On the card itself each worker's task rides beside its name; every other surface keeps the short line. */
   const launch = { tool: 'team.dispatch', argsSummary: JSON.stringify({ background: true, workers: [
-    { agentId: 'copywriter', prompt: 'Write a launch post for StarNet 0.13.5, a local-first AI agent station with a pixel-art UI. Keep it under 120 words.' },
+    { agentId: 'copywriter', prompt: 'Write a launch post for Agent OS 0.13.5, a local-first AI agent station with a pixel-art UI. Keep it under 120 words.' },
     { agentId: 'strategist', prompt: 'Critique the positioning.\nName the one claim to cut.' }] }, null, 2) };
-  assert.equal(card.actionPhrase(launch, true), 'hand copywriter “Write a launch post for StarNet 0.13.5, a local-first AI agent…” and strategist “Critique the positioning” (in the background)');
+  assert.equal(card.actionPhrase(launch, true), 'hand copywriter “Write a launch post for Agent OS 0.13.5, a local-first AI agent…” and strategist “Critique the positioning” (in the background)');
   assert.equal(card.actionPhrase(launch), 'hand work to copywriter and strategist (in the background)', 'toasts, the bell and NEEDS YOU keep the short line');
   const four = { tool: 'team.dispatch', argsSummary: JSON.stringify({ workers: ['a', 'b', 'c', 'd'].map(id => ({ agentId: id, prompt: 'Task for ' + id + ' with a fairly long description that keeps going' })) }) };
   const many = card.actionPhrase(four, true);
@@ -79,9 +79,9 @@ test('the desk card: a glance line in the phrase, the whole request in INSPECT',
     'run 2 copies of itself on “Check the API docs” and “Check the SDK”', 'a spawn is copies of the lead, never "the crew"');
   // the file a task names is its deliverable: a cut keeps it, losing the middle instead (review 10-14: "…into a file called…")
   const tagline = { tool: 'team.dispatch', argsSummary: JSON.stringify({ background: true, workers: [
-    { agentId: 'copywriter', prompt: 'Write a 2-line launch tagline for StarNet 0.13.5 into a file called tagline.md.' },
-    { agentId: 'strategist', prompt: 'Review the positioning of the StarNet 0.13.5 launch and name the one claim to cut.' }] }) };
-  assert.equal(card.actionPhrase(tagline, true), 'hand copywriter “Write a 2-line launch tagline for StarNet 0.13.5 into a … tagline.md” and strategist “Review the positioning of the StarNet 0.13.5 launch and name the one…” (in the background)');
+    { agentId: 'copywriter', prompt: 'Write a 2-line launch tagline for Agent OS 0.13.5 into a file called tagline.md.' },
+    { agentId: 'strategist', prompt: 'Review the positioning of the Agent OS 0.13.5 launch and name the one claim to cut.' }] }) };
+  assert.equal(card.actionPhrase(tagline, true), 'hand copywriter “Write a 2-line launch tagline for Agent OS 0.13.5 into a … tagline.md” and strategist “Review the positioning of the Agent OS 0.13.5 launch and name the one…” (in the background)');
   assert.doesNotMatch(card.actionPhrase({ tool: 'team.dispatch', argsSummary: JSON.stringify({ workers: [{ agentId: 'a', prompt: 'Compare version 0.13.5 against 0.13.2 and list every regression you can find in the notes' }] }) }, true), / … 0\.13/, 'a version number is not a file');
   // a goal loop says what it repeats toward (it read "use loop create: …")
   assert.equal(card.actionPhrase({ tool: 'loop.create', argsSummary: JSON.stringify({ objective: 'Write and refine the final 2-sentence launch post', exitOn: 'never' }) }),
@@ -152,7 +152,7 @@ test('a chat message (Telegram/Discord) fits the whole request or says it had to
     const ask = sends.find(s => /Permission needed/.test(s.t));
     assert.ok(ask, 'the ask was sent');
     if (argsSummary.length < 3000) assert.ok(ask.t.includes(tail.trim()), 'a long command reaches the chat whole');
-    else { assert.match(ask.t, /more characters: open StarNet to read the whole request/); assert.ok(ask.t.length < 4096, 'under a Telegram message: ' + ask.t.length); }
+    else { assert.match(ask.t, /more characters: open Agent OS to read the whole request/); assert.ok(ask.t.length < 4096, 'under a Telegram message: ' + ask.t.length); }
   }
 });
 
@@ -447,7 +447,7 @@ test('a conversation question declined elsewhere says declined, never answered',
 test('a team.dispatch tool row names the workers', () => {
   const rail = { App: { agentName: id => ({ copywriter: 'COPY', strategist: 'STRATEGY' })[id] || '' } };
   vm.createContext(rail); vm.runInContext(extract(chat, '  function brief(s)', '\n  // NOTIFICATIONS THAT MEAN SOMETHING') + '\n' + extract(chat, '  let toolRail = null;', '  function ensureToolRail()'), rail);
-  assert.equal(rail.argDigest('{"background":true,"workers":[{"agentId":"copywriter","prompt":"Write a 2-line launch tagline for StarNet 0.13.5 into a file called ta', 'team_dispatch'), 'COPY … · background', 'a capped summary marks the cut, without inventing more workers');
+  assert.equal(rail.argDigest('{"background":true,"workers":[{"agentId":"copywriter","prompt":"Write a 2-line launch tagline for Agent OS 0.13.5 into a file called ta', 'team_dispatch'), 'COPY … · background', 'a capped summary marks the cut, without inventing more workers');
   assert.equal(rail.argDigest('{"workers":[{"agentId":"copywriter","prompt":"a"},{"agentId":"strategist","prompt":"b"}]}', 'team.dispatch'), 'COPY, STRATEGY');
   assert.equal(rail.argDigest('{"path":"src/app.js","content":"x', 'fs_write'), 'src/app.js', 'every other tool keeps its salient argument');
 });

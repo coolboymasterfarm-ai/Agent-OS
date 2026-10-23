@@ -126,7 +126,7 @@ A.ok(/closeSlash[\s\S]{0,200}slashValueMode = null/.test(src), 'closing the pale
     const loop = new Function('StationUI', 'document', 'activeWs', 'loops', 'loopEnded', 'localLine', 'LOOP_MAX_ITERS',
       doorSrc + '\n' + loopSrc + '\nreturn loopCommand;')(SUI, doc, { id: 'w' }, new Map([['w', { label: '5m', fired: 2, skipped: 0, prompt: 'check the build' }]]), new Map(), t => { lines.push(t); return node; }, 20);
     loop('status');
-    A.ok(/It stops if you close StarNet; \/routine makes it permanent\.$/.test(lines[0]), '/loop status keeps its note: ' + lines[0]);
+    A.ok(/It stops if you close Agent OS; \/routine makes it permanent\.$/.test(lines[0]), '/loop status keeps its note: ' + lines[0]);
     const d = doorOf(node);
     A.ok(d && d.type === 'button' && /\bsys-door\b/.test(d.className) && d.textContent === '▸ AUTOMATE › SCHEDULES › NEW', '/loop status carries one door key to SCHEDULES › NEW (its own label: it opens the form, not the list)');
     A.ok(doorRowOk(node, d), 'the key rides a door row of its own under the line, not the tail of its text');

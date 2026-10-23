@@ -1,5 +1,5 @@
 'use strict';
-// genesis-starnet-link.test.js — source guard for the STARNET MANAGED path on the first-run connect screen.
+// genesis-starnet-link.test.js — source guard for the AGENT OS MANAGED path on the first-run connect screen.
 // The subscription flow must be reachable at genesis (buy on the site → link in one confirmed code — no API
 // key anywhere), and it must stay HONEST: the chip is hidden until the sidecar reports a real cloud seam,
 // and WAKE refuses an unlinked pick instead of admitting a run the credits gate would bounce.
@@ -16,9 +16,9 @@ const link = fs.readFileSync(path.join(__dirname, '..', 'sidecar', 'credits-link
 let n = 0;
 const ok = (cond, msg) => { assert.ok(cond, msg); n++; };
 
-// STARNET is THE HERO (the promoted easiest start) and ships HIDDEN — only the live probe reveals it.
-ok(/class="prov prov-hero hidden" data-prov="starnet"/.test(index), 'the STARNET hero ships hidden (honesty: no cloud, no offer)');
-ok(/data-prov="starnet"[\s\S]{0,600}Subscribe and start\. No API keys\./.test(index), 'the STARNET hero clearly explains the simple subscription path');
+// AGENT OS is THE HERO (the promoted easiest start) and ships HIDDEN — only the live probe reveals it.
+ok(/class="prov prov-hero hidden" data-prov="starnet"/.test(index), 'the AGENT OS hero ships hidden (honesty: no cloud, no offer)');
+ok(/data-prov="starnet"[\s\S]{0,600}Subscribe and start\. No API keys\./.test(index), 'the AGENT OS hero clearly explains the simple subscription path');
 // ChatGPT/Codex has no chip of its own anymore — its sign-in lives inside the OPENAI card.
 ok(!/data-prov="codex"/.test(index), 'no standalone codex chip — ChatGPT sign-in lives inside the OPENAI selection');
 ok(/pickedProvider === 'codex'\) pickedProvider = 'openai'/.test(app), 'a returning codex agent lands on the OPENAI card');
@@ -43,23 +43,23 @@ ok(/\/api\/credits\/link\/start/.test(app) && /\/api\/credits\/link\/poll/.test(
 ok(/harness_adopt_credits_token/.test(app), 'a fresh link hands the token to the OS keychain immediately');
 ok(/refreshCreditsConfigured/.test(app), "a fresh link teaches Harness so configured('starnet') answers without a restart");
 
-// WAKE is gated: an unlinked STARNET pick is refused with the remedy named, before any agent exists.
-ok(/pickedProvider === 'starnet'[\s\S]{0,1800}!creditState\.linked[\s\S]{0,240}link your StarNet account first/i.test(app),
-  'WAKE refuses an unlinked STARNET pick and names the one-button remedy');
+// WAKE is gated: an unlinked AGENT OS pick is refused with the remedy named, before any agent exists.
+ok(/pickedProvider === 'starnet'[\s\S]{0,1800}!creditState\.linked[\s\S]{0,240}link your Agent OS account first/i.test(app),
+  'WAKE refuses an unlinked AGENT OS pick and names the one-button remedy');
 
 // Leaving the screen (or switching provider) drops the in-flight pairing poll — no orphan pollers.
 ok(/stopStarnetLinkPoll\(\)/.test(app), 'the pairing poll has a stop, wired on screen exit and provider switch');
 
 // EMPTY WALLET IS SAID HERE (2026-08-22: a first-timer signed in without buying credits; WAKE's real call was
 // refused by managed admission and the screen said "your model didn't answer", so they kept switching models).
-ok(/id="btn-starnet-credits"/.test(index), 'the STARNET block offers ADD CREDITS');
+ok(/id="btn-starnet-credits"/.test(index), 'the AGENT OS block offers ADD CREDITS');
 ok(/id="btn-starnet-switch"/.test(index) && /USE A DIFFERENT ACCOUNT/.test(index),
   'the genesis screen lets a paid beginner escape an automatically linked wrong account');
 ok(/async function switchStarnetAccount\(\)[\s\S]{0,1400}harness_clear_credits_token[\s\S]{0,800}\/api\/credits\/unlink[\s\S]{0,800}startStarnetLink\(\)/.test(app),
   'switch account clears keychain + sidecar link and immediately starts the normal pairing flow');
 ok(/function starnetOutOfCredit\(\)/.test(app), 'a linked-but-empty wallet is a named state');
 ok(/no credits yet/.test(app) && /btn-starnet-credits/.test(app), 'the status line names the empty wallet and the button opens the store');
-const wakeCreditsStart = app.indexOf("msg.textContent = 'checking your StarNet credits…'");
+const wakeCreditsStart = app.indexOf("msg.textContent = 'checking your Agent OS credits…'");
 const wakeCreditsRefresh = app.indexOf('const creditState = await refreshStarnetGenesisStatus();', wakeCreditsStart);
 const wakeCreditsZero = app.indexOf('if (!(creditState.balanceUsd > 0))', wakeCreditsRefresh);
 ok(wakeCreditsStart >= 0 && wakeCreditsRefresh > wakeCreditsStart && wakeCreditsZero > wakeCreditsRefresh,
@@ -140,12 +140,12 @@ ok(/stopStarnetBalancePoll\(\)/.test(app), 'the empty-wallet balance poll has a 
     ok(/no longer accepts this station’s link/.test(w.text) && /credits are safe/.test(w.text), 'a refused link names the refused link (' + prov + ')');
     ok(!/try WAKE again in a moment|couldn’t read your credit balance|no credits|ADD CREDITS/.test(w.text), 'a refused link is never "retry" or "out of credits" (' + prov + ')');
   }
-  ok(/CONNECT STARNET ACCOUNT/.test(wake(refusedLink, 'starnet').text) && /id="btn-starnet-link" class="btn">CONNECT STARNET ACCOUNT/.test(index),
-    'on the STARNET pick the relink copy names the button that is actually on screen');
-  ok(!/CONNECT STARNET ACCOUNT/.test(wake(refusedLink, 'openai').text), 'another provider pick is never pointed at a STARNET button it is not showing');
+  ok(/CONNECT AGENT OS ACCOUNT/.test(wake(refusedLink, 'starnet').text) && /id="btn-starnet-link" class="btn">CONNECT AGENT OS ACCOUNT/.test(index),
+    'on the AGENT OS pick the relink copy names the button that is actually on screen');
+  ok(!/CONNECT AGENT OS ACCOUNT/.test(wake(refusedLink, 'openai').text), 'another provider pick is never pointed at an AGENT OS button it is not showing');
   ok(/couldn’t read your credit balance/.test(wake(unanswered, 'starnet').text), 'an unanswered balance check still says the balance could not be read');
   ok(/no credits/.test(wake(outOf, 'starnet').text), 'only a reported empty wallet says ADD CREDITS');
-  // a balance HELD by this station's own running StarNet runs (audit B11) is neither empty nor unreadable
+  // a balance HELD by this station's own running Agent OS runs (audit B11) is neither empty nor unreadable
   for (const prov of ['starnet', 'openai']) {
     const w = wake(held, prov);
     ok(w.r === false && w.refreshed === 1, 'a held balance bounces WAKE and repaints the balance (' + prov + ')');
@@ -153,9 +153,9 @@ ok(/stopStarnetBalancePoll\(\)/.test(app), 'the empty-wallet balance poll has a 
     ok(!/couldn’t read your credit balance|has no credits/.test(w.text), 'a held balance is never "could not read" or "no credits" (' + prov + ')');
   }
   ok(/＄ ADD CREDITS above/.test(wake(held, 'starnet').text) && !/＄ ADD CREDITS/.test(wake(held, 'openai').text),
-    'only the STARNET pick (which shows the ＄ ADD CREDITS button) is pointed at it; another pick is offered its own key');
+    'only the AGENT OS pick (which shows the ＄ ADD CREDITS button) is pointed at it; another pick is offered its own key');
   ok(wake('rate limited', 'starnet').r === true, 'a non-billing failure falls through to the model-did-not-answer line');
-  ok(!/LINK YOUR STARNET ACCOUNT/.test(app), 'WAKE never names a LINK YOUR STARNET ACCOUNT button (the button reads CONNECT STARNET ACCOUNT)');
+  ok(!/LINK YOUR AGENT OS ACCOUNT/.test(app), 'WAKE never names a LINK YOUR AGENT OS ACCOUNT button (the button reads CONNECT AGENT OS ACCOUNT)');
 }
 
 // REMOTE UNLINK (0.10.8 field regression): local keychain/file presence is not proof after the account page
@@ -170,7 +170,7 @@ ok(/previous link was removed from your account/.test(app),
   'genesis names the removed link and tells the Commander to reconnect credits');
 ok(/lk\.reason === 'link_revoked'[\s\S]{0,220}previous link was removed from your account/.test(stationui),
   'Settings renders the same relink recovery from backend truth');
-ok(/LINK SAVED · SERVICE UNAVAILABLE/.test(stationui) && /link saved on this station, but StarNet could not verify it/.test(app),
+ok(/LINK SAVED · SERVICE UNAVAILABLE/.test(stationui) && /link saved on this station, but Agent OS could not verify it/.test(app),
   'temporary cloud failure is presented separately and never overclaimed as LINKED');
 
 console.log('genesis-starnet-link.test.js OK -', n, 'assertions');

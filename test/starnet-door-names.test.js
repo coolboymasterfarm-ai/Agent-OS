@@ -1,5 +1,5 @@
 /* test/starnet-door-names.test.js — every StarNet-credit message names a door that EXISTS.
-   The SETTINGS console has no "PROVIDERS" section any more: the StarNet card, the STORE (+ ADD CREDITS) and
+   The SETTINGS console has no "PROVIDERS" section any more: the Agent OS card, the STORE (+ ADD CREDITS) and
    the relink live on the AI & MODELS page (stationui.js section id 'providers', label 'AI & MODELS'). A prop
    refusal or a credential error that says "SETTINGS → PROVIDERS" sends the user hunting for a tab that is not
    there (spend-truth lane B5, 2026-10-08). The cloud is a fake fetch; nothing leaves the process. */
@@ -58,9 +58,9 @@ A.ok(!/label: 'PROVIDERS'/.test(station), 'no SETTINGS section is labelled PROVI
     A.ok(!/SETTINGS \\u2192 PROVIDERS|SETTINGS → PROVIDERS/.test(read('sidecar/userprops.js')), 'userprops.js names no SETTINGS → PROVIDERS door anywhere');
     // the starnet credential error (index.js providerCredentialError) points at the real page
     const idx = read('sidecar/index.js');
-    A.ok(/if \(id === 'starnet'\) return 'link this station to a StarNet account \(SETTINGS -> AI & MODELS -> STARNET MANAGED\) to run on credits';/.test(idx),
-      'a StarNet credential error names SETTINGS -> AI & MODELS -> STARNET MANAGED');
-    A.ok(!/SETTINGS -> PROVIDERS -> STARNET MANAGED/.test(idx), 'the old PROVIDERS door is gone from index.js');
+    A.ok(/if \(id === 'starnet'\) return 'link this station to an Agent OS account \(SETTINGS -> AI & MODELS -> AGENT OS MANAGED\) to run on credits';/.test(idx),
+      'an Agent OS credential error names SETTINGS -> AI & MODELS -> AGENT OS MANAGED');
+    A.ok(!/SETTINGS -> PROVIDERS -> AGENT OS MANAGED/.test(idx), 'the old PROVIDERS door is gone from index.js');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   A.report('starnet-door-names');
 })().catch(e => { console.error(e); process.exit(1); });

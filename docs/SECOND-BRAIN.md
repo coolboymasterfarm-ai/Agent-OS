@@ -84,7 +84,7 @@ base scaffold && base sync --ast --target src         # writes .base/graph.nq
 
 ## 3. The auto-improving loop (station-wide)
 
-StarNet's reflection loop already works **inside one notebook**: propose → Keep/Edit/Discard → `memory.feedback`
+Agent OS's reflection loop already works **inside one notebook**: propose → Keep/Edit/Discard → `memory.feedback`
 moves trust → trust decays when unreinforced → an explicit Discard lands in `declined:<agent>` so it is never
 proposed again. That is the Hermes-shaped loop.
 

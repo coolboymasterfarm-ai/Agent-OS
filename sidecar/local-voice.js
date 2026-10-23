@@ -135,7 +135,7 @@ let ttsBusy = 0;
 let lastTtsMs = null;
 const monotonicMs = () => Number(process.hrtime.bigint() / 1000000n);
 
-// Transformers eagerly loads Sharp even though StarNet's offline voice paths are audio/text only. Sharp
+// Transformers eagerly loads Sharp even though Agent OS's offline voice paths are audio/text only. Sharp
 // <0.35 inherits vulnerable libvips loaders; upstream's documented compatible workaround is to disable
 // GIF, TIFF, and VIPS decoding. Apply it before either Transformers copy is imported so future call sites
 // cannot accidentally turn an unused image surface into an untrusted-input decoder.

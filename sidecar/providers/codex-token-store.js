@@ -19,7 +19,7 @@
     catch (_) { return String(file || '').toLowerCase(); }
   }
 
-  /* THE KNOWN StarNet WORKSPACE ROOTS on this machine — the app's own homes across versions and renames.
+  /* THE KNOWN Agent OS WORKSPACE ROOTS on this machine — the app's own homes across versions and renames.
      A migration only ever crosses BETWEEN these; see isRecognizedWorkspaceRoot. */
   function knownWorkspaceRoots(opts) {
     opts = opts || {};
@@ -52,7 +52,7 @@
   }
 
   /* ⛔ A CREDENTIAL MUST NOT CROSS AN ISOLATION BOUNDARY. This migration exists so the Commander keeps their
-     ChatGPT sign-in when the app's OWN workspace root moves between versions ("StarNet" <- "Skynet" <-
+     ChatGPT sign-in when the app's OWN workspace root moves between versions ("Agent OS" <- "Skynet" <-
      "ai.skynet.harness"). It is NOT a licence to copy a live OAuth refresh token into whatever directory
      SKYNET_WORKSPACES happens to point at — and every test boot, dev seed and QA journey points it at a fresh
      temp dir. Two things went wrong at once there: the Commander's real credential was written into

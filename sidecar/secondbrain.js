@@ -1,6 +1,6 @@
 /* sidecar/secondbrain.js — THE SECOND BRAIN: one graph over every agent's notebook.
 
-   What this is. StarNet already gives each agent a durable notebook (memory-store.js: one
+   What this is. Agent OS already gives each agent a durable notebook (memory-store.js: one
    WORKSPACES/<agentId>.notebook.json per agent) and recall ranks that notebook alone (context.js: BM25 +
    optional embeddings + recency/trust/stream/project boosts). That is a set of SOLIPSISTIC brains: agent A's
    hard-won lesson is invisible to agent B, and nothing shows the Commander the shape of what the station knows.

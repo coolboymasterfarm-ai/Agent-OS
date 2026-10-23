@@ -1,4 +1,4 @@
-/* sidecar/skills/market-format.js — the StarNet Skill Market catalog format, shared by the build script
+/* sidecar/skills/market-format.js — the Agent OS Skill Market catalog format, shared by the build script
    (scripts/build-skill-catalog.mjs, which writes the catalog into website/) and the app (skills/market.js, which
    reads it). One definition so the two can never disagree about slugs, versions, digests or the file manifest.
 
@@ -76,7 +76,7 @@ function revokedMatch(revoked, slug, digest) {
   return (revoked || []).find(r => r.slug === slug && (!r.digest || r.digest === digest)) || null;
 }
 
-/* libraryToSkillMd — a bundled StarNet recipe (sidecar/skills/library/<slug>.md, parsed by catalog.parse) as a
+/* libraryToSkillMd — a bundled Agent OS recipe (sidecar/skills/library/<slug>.md, parsed by catalog.parse) as a
    standard Agent Skills SKILL.md: spec name = the slug, the display title under metadata.title. The body is the
    recipe body byte for byte, so the market copy and the bundled copy say the same thing at the same version. */
 function libraryToSkillMd(recipe, opts) {
@@ -146,7 +146,7 @@ function buildEntry(src) {
     files: pkg.files.map(f => ({ path: f.path, sha256: f.sha256, bytes: f.bytes }))
   };
   if (src.upstream) entry.upstream = { url: str(src.upstream.url), commit: str(src.upstream.commit), license: str(src.upstream.license || entry.license) };
-  // shared by a StarNet user through the upload page (read and approved before it was published); additive, older apps ignore it
+  // shared by an Agent OS user through the upload page (read and approved before it was published); additive, older apps ignore it
   if (src.shelf === 'community' && src.submission && !src.upstream) entry.uploaded = true;
   return { entry, pkg };
 }

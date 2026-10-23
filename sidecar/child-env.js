@@ -7,7 +7,7 @@
    PowerShell helpers, Chrome, project-loop checks and PTY terminals.
 
    THE RULE — strip what the STATION put there, keep what the USER put there:
-     1. Every STARNET_* / SKYNET_* variable. That is StarNet's own namespace: the desktop shell injects every
+     1. Every STARNET_* / SKYNET_* variable. That is Agent OS's own namespace: the desktop shell injects every
         secret it hands the sidecar under these names (src-tauri main.rs sidecar_command: SKYNET_API_TOKEN,
         SKYNET_IPC_TOKEN, SKYNET_<PROVIDER>_API_KEY, SKYNET_KEY_POOL_*, SKYNET_TELEGRAM/DISCORD_TOKEN,
         SKYNET_TELEGRAM_BOT_TOKENS, STARNET_CREDITS_TOKEN, STARNET_CONNECTOR_ENCRYPTION_KEY, …, each in both

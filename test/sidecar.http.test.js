@@ -219,7 +219,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     const desktopDiagResponse = await fetch(B + '/api/diagnostics', { headers: Object.assign({ Origin: tauriOrigin }, tok) });
     const desktopDiag = await desktopDiagResponse.json();
     A.eq(desktopDiag.report.mode, 'desktop', 'http://tauri.localhost is classified as the packaged desktop origin');
-    A.ok(/StarNet diagnostics/.test(diag.body.text), 'the block is clearly fenced');
+    A.ok(/Agent OS diagnostics/.test(diag.body.text), 'the block is clearly fenced');
     A.ok(/no keys, tokens, or message content/.test(diag.body.text), 'the block states it carries no secrets');
     A.eq(typeof diag.body.report.keyPresent, 'boolean', 'keyPresent is a boolean, never the key itself');
     // the pre-seeded discord channel carries a fake OpenRouter key (sk-or-v1-fake-discord) + a bot token — NEITHER
@@ -389,7 +389,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
 
         const unlinked = await request('POST', '/api/credits/unlink', {});
         A.eq(unlinked.body.unlinked, true, 'genesis switch-account action clears the old sidecar link');
-        const start = await request('POST', '/api/credits/link/start', { deviceName: 'StarNet Station' });
+        const start = await request('POST', '/api/credits/link/start', { deviceName: 'Agent OS Station' });
         A.eq(start.body.code, 'STAR-PAID', 'switch account starts the ordinary one-code pairing flow');
         const paired = await request('POST', '/api/credits/link/poll', { code: start.body.code });
         A.eq(paired.body.linked, true, 'newly confirmed paid account is accepted as linked');
@@ -409,7 +409,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
           provider: 'starnet', model: 'test/model', agentId: 'paid-wake', internal: true,
           messages: [{ role: 'user', content: 'Reply with exactly: OK' }]
         });
-        A.eq(run.status, 200, 'funded StarNet WAKE enters the real streaming run route');
+        A.eq(run.status, 200, 'funded Agent OS WAKE enters the real streaming run route');
         A.ok(run.text.indexOf('agent.token') >= 0, 'funded WAKE reaches the managed model and streams its reply');
         A.ok(run.text.indexOf('Out of managed credit') < 0, 'funded WAKE is never denied as out of credits');
         const paidCalls = calls.filter(c => ['/v1/balance', '/v1/debit', '/v1/credit', '/v1/chat/completions'].includes(c.path) && c.account !== 'acct_wrong_zero');
@@ -425,7 +425,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     }
 
     // ---- managed credits: LINKED-BUT-UNFUNDED STATION STILL WAKES ON ITS OWN KEY (issue #6) ------
-    // A station device-linked to a $0 StarNet account picks a BYOK provider (own Gemini/OpenAI/custom
+    // A station device-linked to a $0 Agent OS account picks a BYOK provider (own Gemini/OpenAI/custom
     // key). That run spends the user's vendor money, not managed credit — admission must pass it
     // through byok (no reservation, no debit/credit against the wallet) while a 'starnet' relay run
     // on the same $0 wallet is still honestly refused. Before the fix, the BYOK wake looped forever
@@ -491,7 +491,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
           messages: [{ role: 'user', content: 'Reply with exactly: OK' }]
         });
         A.eq(byok.status, 200, 'BYOK WAKE on a linked $0 station enters the real streaming run route');
-        A.ok(byok.text.indexOf('Out of managed credit') < 0, 'BYOK run is never refused for an empty StarNet wallet (issue #6)');
+        A.ok(byok.text.indexOf('Out of managed credit') < 0, 'BYOK run is never refused for an empty Agent OS wallet (issue #6)');
         A.ok(byok.text.indexOf('agent.token') >= 0, 'BYOK run reaches the user\'s own model endpoint and streams its reply');
         A.ok(vendorCalls.some(c => c.path === '/v1/chat/completions' && c.auth === 'Bearer byok-own-key'),
           'the BYOK run authenticated to the USER\'s endpoint with the user\'s key');

@@ -1,5 +1,5 @@
 /* test/settle-managed-copy.test.js — SETTINGS › SPENDING LIMITS › INTERRUPTED tells you WHERE the charge is.
-   An interrupted run's receipt records whether it ran on StarNet credits (ledger receipt `managed: true`). Its charge
+   An interrupted run's receipt records whether it ran on Agent OS credits (ledger receipt `managed: true`). Its charge
    then shows in the STORE's RECENT ACTIVITY (SETTINGS → AI & MODELS), listed by run id, not on a provider dashboard
    the user never had — the old copy told every row to "enter the charge your provider dashboard shows". A BYOK row
    keeps the provider dashboard. Spend-truth lane B6, 2026-10-08. Drives the real wireBudget/paintUnsettled source in a vm with
@@ -33,18 +33,18 @@ const harness = (status) => {
   // its run id, on a linked station AND on an operator (env) station — the account web page has no run ids, and an
   // operator station's charges are not on account.starnetos.com at all
   const mTip = managedRow.attrs['data-tip'];
-  assert.match(mTip, /StarNet credits/, 'the managed row says it ran on StarNet credits: ' + mTip);
+  assert.match(mTip, /Agent OS credits/, 'the managed row says it ran on Agent OS credits: ' + mTip);
   assert.match(mTip, /SETTINGS → AI & MODELS › STORE › RECENT ACTIVITY/, 'and where its charge is: ' + mTip);
   assert.match(mTip, /run m1\b/, 'naming the run id the activity lists it under: ' + mTip);
   assert.doesNotMatch(mTip, /account\.starnetos\.com/, 'no hardcoded account host');
   assert.doesNotMatch(mTip, /provider dashboard/, 'not a provider dashboard the user never had');
   const [, mUsd, mSettle, mCount] = managedRow.children;
-  assert.match(mUsd.attrs['aria-label'], /what StarNet charged/, 'the amount field asks what StarNet charged');
+  assert.match(mUsd.attrs['aria-label'], /what Agent OS charged/, 'the amount field asks what Agent OS charged');
   assert.match(mCount.attrs['data-tip'], /the STORE’s RECENT ACTIVITY has the exact charge/, 'COUNT AS points at the same activity: ' + mCount.attrs['data-tip']);
   assert.doesNotMatch(mCount.attrs['data-tip'], /provider dashboard/);
   mUsd.value = ''; mSettle.click(); await tick();
   assert.equal(posts.length, 0, 'a blank is not $0');
-  assert.match(node('#budget-msg').textContent, /what StarNet charged/, 'the refusal asks for what StarNet charged: ' + node('#budget-msg').textContent);
+  assert.match(node('#budget-msg').textContent, /what Agent OS charged/, 'the refusal asks for what Agent OS charged: ' + node('#budget-msg').textContent);
   // a BYOK row keeps the provider dashboard
   const bTip = byokRow.attrs['data-tip'];
   assert.match(bTip, /provider dashboard/, 'a provider-key row still points at the provider dashboard: ' + bTip);
@@ -61,7 +61,7 @@ const harness = (status) => {
     const h = harness({...st, unsettled:[unknown]}); await tick();
     const row = h.node('#budget-unsettled').children[0];
     assert.match(row.attrs['data-tip'], /billing source was not recorded/);
-    assert.doesNotMatch(row.attrs['data-tip'], /Enter the charge your provider dashboard|it ran on your StarNet credits/);
+    assert.doesNotMatch(row.attrs['data-tip'], /Enter the charge your provider dashboard|it ran on your Agent OS credits/);
     assert.match(row.children[1].attrs['aria-label'], /verified charge/);
     assert.match(row.children[0].textContent, /BILLING SOURCE UNKNOWN/);
     assert.equal(row.children.length, 3, 'missing cap is never invented');
@@ -137,7 +137,7 @@ const harness = (status) => {
   const idx = fs.readFileSync(path.join(__dirname, '..', 'sidecar/index.js'), 'utf8');
   const settle = idx.slice(idx.indexOf('async function handleBudgetSettle('), idx.indexOf('async function warmModelCatalogSet('));
   assert.ok(settle.length > 200 && settle.length < 6000, 'handleBudgetSettle found');
-  assert.match(settle, /open\.managed === true \? 'this run recorded no per-run limit — enter what StarNet charged for it \(SETTINGS → AI & MODELS › STORE › RECENT ACTIVITY lists each charge with its run id\)' : open\.managed === false \? 'this run recorded no per-run limit — enter the charge from your provider dashboard'/,
+  assert.match(settle, /open\.managed === true \? 'this run recorded no per-run limit — enter what Agent OS charged for it \(SETTINGS → AI & MODELS › STORE › RECENT ACTIVITY lists each charge with its run id\)' : open\.managed === false \? 'this run recorded no per-run limit — enter the charge from your provider dashboard'/,
     'a limit-less managed receipt is pointed at the STORE’s RECENT ACTIVITY');
   // the door exists: the configured STORE renders a RECENT ACTIVITY list whose rows carry the run id
   assert.match(text, /<h4 class="ms-h">STORE /, 'the STORE heading exists under AI & MODELS');

@@ -64,12 +64,12 @@ function fakeWindow() {
     A.ok(v.browserDataCleared === true, 'receipt passed through');
     const s = DR.eraseSummary(v);
     A.ok(s.complete && s.reloadSafe, 'a complete receipt is complete and safe to reload');
-    A.ok(/Deleted 1 StarNet data location/.test(s.lines.join(' ')) && /Removed StarNet's saved keys/.test(s.lines.join(' ')), 'summary: ' + s.lines.join(' '));
+    A.ok(/Deleted 1 Agent OS data location/.test(s.lines.join(' ')) && /Removed Agent OS's saved keys/.test(s.lines.join(' ')), 'summary: ' + s.lines.join(' '));
   }
   {
     // refused before any deletion: the window must work again (freeze lifted) and the error is shown verbatim
     const f = fakeWindow();
-    const core = { invoke: async () => { throw new Error('nothing was erased - another StarNet process still owns this station'); } };
+    const core = { invoke: async () => { throw new Error('nothing was erased - another Agent OS process still owns this station'); } };
     let err = null;
     try { await DR.eraseDesktop({ core, win: f.w }); } catch (e) { err = e; }
     A.ok(err && /^nothing was erased/.test(err.message), 'a refused erase surfaces the shell\'s own words');
@@ -77,7 +77,7 @@ function fakeWindow() {
     A.eq(f.writes.length, 1, 'and the freeze is lifted so the station keeps saving');
   }
   {
-    // the native WebView clear failed: StarNet's own keys are cleared through the fallback before any reload
+    // the native WebView clear failed: Agent OS's own keys are cleared through the fallback before any reload
     const f = fakeWindow();
     let fallback = 0;
     const core = { invoke: async () => ({ ok: true, listening: true, removed: [], failed: [], keychainFailed: [], browserDataCleared: false }) };
@@ -99,7 +99,7 @@ function fakeWindow() {
     const t = s.lines.join(' ');
     A.ok(!s.complete && s.reloadSafe, 'partial: not complete, but the fresh station can open');
     A.ok(/Could NOT delete 1: C:\/Users\/a\/AppData\/Roaming\/ai\.skynet\.harness\/update-snapshots \(Access is denied\.\)/.test(t), 'the leftover path and the OS reason are named');
-    A.ok(/Could NOT remove 1 saved credential/.test(t) && !/Removed StarNet's saved keys/.test(t), 'a keychain failure is never reported as removed');
+    A.ok(/Could NOT remove 1 saved credential/.test(t) && !/Removed Agent OS's saved keys/.test(t), 'a keychain failure is never reported as removed');
     A.ok(/Launch at login could not be turned off/.test(t), 'autostart failure named');
     const dead = DR.eraseSummary({ ok: true, listening: false, browserDataCleared: true, removed: [], failed: [], keychainFailed: [] });
     A.ok(!dead.reloadSafe && /did not start answering/.test(dead.lines.join(' ')), 'a fresh station that is not answering is said plainly');
@@ -108,11 +108,11 @@ function fakeWindow() {
   /* ---- RESET STATION BROWSER copy follows the sweep receipt ---- */
   {
     const t = DR.browserResetSummary(200, { ok: true, closed: true, sweep: { ok: true, found: 3, killed: [300, 301, 302], survivors: [], ours: [], locks: { removed: ['lockfile'], failed: [] } } });
-    A.ok(/Ended 3 of 3 leftover StarNet browser processes/.test(t) && /Cleared its stale profile lock/.test(t) && /sign-ins were kept/.test(t), t);
+    A.ok(/Ended 3 of 3 leftover Agent OS browser processes/.test(t) && /Cleared its stale profile lock/.test(t) && /sign-ins were kept/.test(t), t);
     const t2 = DR.browserResetSummary(409, { ok: false, closed: true, sweep: { ok: false, found: 1, killed: [], survivors: [300], ours: [], locks: { removed: [], failed: [] } } });
     A.ok(/could not be ended \(pid 300\)/.test(t2) && !/sign-ins were kept/.test(t2), 'a survivor is never a success: ' + t2);
     A.ok(/Stop that run/.test(DR.browserResetSummary(409, { ok: false, driving: { runId: 'r' } })), 'refused while an agent drives');
-    A.ok(/No leftover StarNet browser was running/.test(DR.browserResetSummary(200, { ok: true, closed: false, sweep: { ok: true, found: 0, killed: [], survivors: [], ours: [], locks: { removed: [], failed: [] } } })), 'clean case');
+    A.ok(/No leftover Agent OS browser was running/.test(DR.browserResetSummary(200, { ok: true, closed: false, sweep: { ok: true, found: 0, killed: [], survivors: [], ours: [], locks: { removed: [], failed: [] } } })), 'clean case');
   }
 
   /* ---- wiring contract (static): what the page depends on exists, and the native erase is guarded ---- */
