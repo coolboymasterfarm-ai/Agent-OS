@@ -3543,6 +3543,14 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         } },
       { id: 'memory', label: 'MEMORY', glyph: '◈', desc: 'Review saved memories, their sources, and how the station learns.',
         build: frag(agMemory(a)) },
+      /* BRAIN — the same live second-brain view the station-wide BRAIN window shows, scoped to this agent: its
+         beliefs in place among everyone else's, so a lesson another crew member learned is visibly one click away
+         rather than invisible. Scoped, never filtered away: the graph stays whole and this agent's cluster is lit. */
+      { id: 'brain', label: 'BRAIN', glyph: '✺', desc: 'This agent’s beliefs inside the station-wide second brain — and what the crew learned that it can use.',
+        build: elx => {
+          if (typeof SecondBrain !== 'undefined') SecondBrain.mount(elx, { agentId: a && a.id });
+          else elx.innerHTML = '<p class="muted">The second brain view is unavailable.</p>';
+        } },
       { id: 'config', label: 'CONFIG', glyph: '▣', desc: 'Adjust this agent’s instructions, model, access, and appearance.',
         build: frag(agConfig(a)) }
     ], {
