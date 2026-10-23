@@ -59,6 +59,11 @@ ok(/x-starnet-token/i.test(read('sidecar/index.js')), 'the x-starnet-token heade
 ok(fs.existsSync(path.join(root, 'bin/starnet.js')), 'bin/starnet.js still exists');
 ok(/starnet/.test(read('sidecar/providers/registry.js')) || /'starnet'/.test(read('sidecar/index.js')), "the managed provider id 'starnet' is still used");
 
+// productName drives the installer filenames, the Applications/Start-menu entry, the update manifest and the app-data
+// id. Renaming it is a release-engineering change (migration + updater), not a copy change; INSTALL.md/README.md quote it.
+const tauriConf = JSON.parse(read('src-tauri/tauri.conf.json'));
+ok(tauriConf.productName === 'StarNet', 'productName is still StarNet (the installer, updater and install docs depend on it)');
+
 // ---- the self-window guard knows both names ----
 const computer = require('../sidecar/tools/builtin/computer.js');
 const T = computer.makeComputerTools ? computer._internals : null;
