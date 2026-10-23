@@ -1,13 +1,13 @@
 # Third-party notices & credits
 
-StarNet bundles a library of **pure-prompt skill recipes** (`sidecar/skills/library/*.md`).
+Agent OS bundles a library of **pure-prompt skill recipes** (`sidecar/skills/library/*.md`).
 Many are adaptations of MIT-licensed community skills. This file preserves the attribution
 and license notices for that upstream work, as the MIT License requires. The recipe text in
-the app is condensed and re-voiced for StarNet's workstation model, but the underlying ideas
+the app is condensed and re-voiced for Agent OS's workstation model, but the underlying ideas
 and, in places, close paraphrases originate with the authors credited below.
 
-Several recipes reached StarNet through the open-source **Hermes agent project**
-(© 2025 Nous Research, MIT) — the harness StarNet's backend was in part ported from — which
+Several recipes reached Agent OS through the open-source **Hermes agent project**
+(© 2025 Nous Research, MIT) — the harness Agent OS's backend was in part ported from — which
 had itself collected them from the community authors listed here. Credit is given to the
 original authors wherever one is known.
 
@@ -42,23 +42,23 @@ copyright holder: **Nous Research**.
 `node-inspect-debugger`, `p5js-sketch`, `pdf-document-extraction` (from *ocr-and-documents*),
 `python-debugger`, `simplify-code`, `web-research`.
 
-## Authored for StarNet
+## Authored for Agent OS
 
-These recipes were written for StarNet and carry no distinct external upstream. (Some were
+These recipes were written for Agent OS and carry no distinct external upstream. (Some were
 previously bylined "Hermes Agent" by convention; that byline has been removed.) They are also
-published as **StarNet Originals** in the Skill Market (`skills-catalog/originals.json`).
+published as **Agent OS Originals** in the Skill Market (`skills-catalog/originals.json`).
 
 `accessibility-audit`, `ad-copy-testing`, `adversarial-review-pass`, `announcement-kit`, `application-tailoring`, `browser-operation`, `commitment-tracking`, `content-calendar`, `contract-review`, `cost-audit`, `dataset-harvest`, `deploy-checklist`, `digest-composer`, `email-sequence`, `exposed-secrets-audit`, `exposure-reduction`, `feed-watch`, `file-curation`, `hard-conversation`, `health-record-prep`, `hiring-screen`, `inbox-triage`, `itinerary-planning`, `landing-copy`, `lead-scouting`, `ledger-upkeep`, `marketing-plan`, `meal-planning`, `negotiation-case`, `opportunity-scan`, `pitch-deck`, `price-watch`, `relationship-log`, `schema-and-access`, `security-sweep`, `short-form-script`, `sop-writing`, `source-triangulation`, `spec-drafting`, `study-plan`, `support-replies`, `translation-pass`, `ugc-brief`, `voice-match`, `website-workflow`, `work-splitting`.
 
 ## Skill Market (skills-catalog/)
 
 The Skill Market catalog (`website/skills/`, built by `scripts/build-skill-catalog.mjs`) publishes the
-**StarNet Originals** listed above plus these market-only originals, written for StarNet:
+**Agent OS Originals** listed above plus these market-only originals, written for Agent OS:
 
 `address-pr-comments`, `bills-and-subscriptions`, `brand-assets`, `calendar-scheduling`, `changelog-writing`, `channel-updates`, `crew-handoff`, `daily-briefing`, `data-cleanup-and-analysis`, `deliverable-handoff`, `fitness-and-nutrition`, `fix-failing-ci`, `flashcards`, `grounded-citations`, `issue-triage`, `line-design`, `link-and-video-summary`, `meeting-prep`, `notebook-gardening`, `persistent-reminders`, `project-onboarding`, `receipt-organizer`, `routine-craft`, `skill-authoring`, `spend-aware-work`, `station-self-check`, `studio-video`.
 
-and these **community picks**, adapted for StarNet. Each package ships its full license text
-(`skills-catalog/skills/<slug>/LICENSE`) naming the original author and StarNet's modifications; Apache-2.0 packages also ship a `NOTICE`.
+and these **community picks**, adapted for Agent OS. Each package ships its full license text
+(`skills-catalog/skills/<slug>/LICENSE`) naming the original author and Agent OS's modifications; Apache-2.0 packages also ship a `NOTICE`.
 
 | Skill | Original author | Upstream | License |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ and these **community picks**, adapted for StarNet. Each package ships its full 
 
 ## Bundled fonts
 
-StarNet ships the **VT323** typeface locally (`frontend/assets/fonts/vt323.woff2`) so the
+Agent OS ships the **VT323** typeface locally (`frontend/assets/fonts/vt323.woff2`) so the
 CRT terminal look renders on an offline / air-gapped first boot without depending on Google
 Fonts. VT323 is provided under the **SIL Open Font License, Version 1.1**.
 
@@ -156,20 +156,20 @@ DEALINGS IN THE SOFTWARE.
 
 ## Bundled Ogg/Opus decoder
 
-StarNet uses [`ogg-opus-decoder`](https://github.com/eshaz/wasm-audio-decoders/tree/main/src/ogg-opus-decoder)
+Agent OS uses [`ogg-opus-decoder`](https://github.com/eshaz/wasm-audio-decoders/tree/main/src/ogg-opus-decoder)
 (Copyright Ethan Halsall, MIT) to decode Telegram voice notes for the local speech-recognition engine. Its
 transitive [`codec-parser`](https://github.com/eshaz/codec-parser) component is provided under the GNU Lesser
 General Public License v3.0 or later. The unmodified packages, their license files, and their corresponding
 source locations are preserved in the bundled `node_modules` tree.
 
-## StarNet's own name and artwork
+## Agent OS's own name and artwork
 
-The credits above cover third-party work bundled with StarNet. StarNet's own code is released
+The credits above cover third-party work bundled with Agent OS. Agent OS's own code is released
 under the MIT License (see `LICENSE`) and may be forked, modified, and redistributed, including
 commercially.
 
-That license covers the code only. The **StarNet** name, the logo, the station artwork and
+That license covers the code only. The **Agent OS** name (and its former name, **StarNet**), the logo, the station artwork and
 sprites, and the rest of the project's brand identity are owned by Andrew Sims and are not
 licensed with the code. No trademark or other brand right is granted, expressly or by
 implication. A fork or derivative must ship under its own name, logo, and artwork, and must not
-present itself as StarNet or as endorsed by it.
+present itself as Agent OS or StarNet, or as endorsed by either.
