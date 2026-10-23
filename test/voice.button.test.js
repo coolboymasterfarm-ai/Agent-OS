@@ -50,6 +50,8 @@ class MockMR {
   start() { this.state = 'recording'; }
   stop() { if (this.state !== 'inactive') { this.state = 'inactive'; const s = this; setTimeout(() => { s.onstop && s.onstop(); }, 0); } }
 }
+// Feed audio to EVERY processor: on a busy gate a take can hold two, and "the newest" is not always the one wired to it.
+const allProcessors = { fire: samples => processorInstances.forEach(p => p.fire(samples)) };
 class MockAnalyser { constructor() { this.fftSize = 2048; } getFloatTimeDomainData(b) { for (let i = 0; i < b.length; i++) b[i] = 0; } }
 class MockProcessor {
   constructor() { this.onaudioprocess = null; processorInstances.push(this); }
@@ -251,7 +253,7 @@ async function opensWithin(t, ms) {
     await tick();
     t.nodes['chat-mic'].onclick();
     await until(() => processorInstances.length > 0, 500);
-    const processor = processorInstances[processorInstances.length - 1];
+    const processor = allProcessors;
     const voiced = new Float32Array(2048); voiced.fill(0.18); processor.fire(voiced);
     await tick(80); // longer than the former compressed silence endpoint: the take must remain open
     A.eq(t.Voice.isListening(), true, 'Windows standard voice remains recording across a pause');
@@ -288,7 +290,7 @@ async function opensWithin(t, ms) {
     t.Voice.startListening();
     await until(() => processorInstances.length > 0, 500);
     A.ok(processorInstances.length > 0, 'local push-to-talk captures PCM alongside the level meter');
-    const processor = processorInstances[processorInstances.length - 1];
+    const processor = allProcessors;
     const voiced = new Float32Array(2048); voiced.fill(0.18);
     for (let i = 0; i < 18; i++) processor.fire(voiced);
     await until(() => t.nodes['chat-input'].value === 'Acme Corporation', 1000);
@@ -321,7 +323,7 @@ async function opensWithin(t, ms) {
     } });
     await tick(); t.Voice.startListening();
     await until(() => processorInstances.length > 0, 500);
-    const processor = processorInstances[processorInstances.length - 1];
+    const processor = allProcessors;
     const speech = new Float32Array(2048).fill(.18);
     for (let i=0;i<18;i++) processor.fire(speech);
     await until(() => t.nodes['chat-input'].value === 'visible before I finish', 1000);
@@ -1227,8 +1229,8 @@ async function opensWithin(t, ms) {
     const t=boot({desktop:true,fetch:url=>Promise.resolve({ok:true,json:async()=>({available:true,preferred:'local',local:true})})});
     t.sandbox.VoiceStream={open:()=>({failed:false,push(){},cancel(){cancelled++;},finish:()=>new Promise(resolve=>pending.push(resolve))})};
     await tick();t.Voice.startListening();await until(()=>processorInstances.length>0,1000);
-    processorInstances[processorInstances.length-1].fire(new Float32Array(2048).fill(.2));
-    t.Voice.stopListening();await until(()=>pending.length===1,1000);
+    allProcessors.fire(new Float32Array(2048).fill(.2));
+    t.Voice.stopListening();A.ok(await until(()=>pending.length===1,5000),'stop asks the stream for its final recognition');
     t.Voice.pauseCoordinator();t.Voice.resumeCoordinator();t.Voice.startListening();
     await until(()=>t.Voice.isListening(),1000);
     A.ok(cancelled>0,'pause cancels a stream whose final recognition is still pending');
