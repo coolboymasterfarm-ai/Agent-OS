@@ -111,7 +111,7 @@ const now = 1_000_000;
   let s = U.recordCheckResult({}, { checkedAt: now, update: { version: '0.13.2' } }, now);
   A.eq(s.availableVersion, '0.13.2', 'a check that finds an update remembers its version');
   s = U.recordNotified(s, '0.13.2');
-  const later = now + HOUR;   // well inside the 6h interval
+  const later = now + U.CHECK_INTERVAL_MS / 2;   // well inside the steady interval, whatever it is
   const a = U.nextAction({ settings: s, runtime: { desktop: true, phase: 'idle', hasUpdate: false, currentVersion: '0.13.1' }, now: later });
   A.eq(a.action, 'check', 'a relaunch that knows of a newer version checks at once');
   A.eq(a.reason, 'known-update', 'the reason names the remembered update');

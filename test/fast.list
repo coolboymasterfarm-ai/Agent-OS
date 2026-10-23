@@ -1256,3 +1256,4 @@ test/delegated-ledger-first-read.test.js
 test/brand-identifiers.test.js
 test/secondbrain.test.js
 test/secondbrain-sources.test.js
+test/agent-os-update.test.js

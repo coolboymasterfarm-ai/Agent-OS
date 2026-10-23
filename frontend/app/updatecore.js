@@ -9,7 +9,8 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+  // 30 min: every merge to main publishes an update (agent-os-update.yml), so a running app should notice it soon
+  const CHECK_INTERVAL_MS = 30 * 60 * 1000;
   const RETRY_BASE_MS = 15 * 60 * 1000;
   const RETRY_MAX_MS = 6 * 60 * 60 * 1000;
   const REMIND_LATER_MS = 24 * 60 * 60 * 1000;
