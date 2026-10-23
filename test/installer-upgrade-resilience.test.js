@@ -17,8 +17,12 @@ A.ok(guiInit >= 0 && guiInit < preinstall, 'manual-upgrade detection runs before
 A.ok(hooks.includes('!define MUI_CUSTOMFUNCTION_GUIINIT StarNetManualUpgradeInit'), 'manual upgrade composes with Tauri Modern UI GUI initialization');
 A.ok(hooks.includes('GetDLLVersion "$EXEPATH"'), 'manual upgrade reads the candidate executable version instead of duplicating a release pin');
 A.ok(hooks.includes('${VersionCompare} "$R3" "$R9" $R2'), 'manual upgrade uses the preloaded NSIS version comparison against installed truth');
-A.ok((hooks.match(/ReadRegStr \$R1 HK(?:CU|LM).*"InstallLocation"/g) || []).length === 2,
+A.ok((hooks.match(/ReadRegStr \$R1 HK(?:CU|LM).*Uninstall\\StarNet" "InstallLocation"/g) || []).length === 2,
   'manual upgrade reads the authoritative install location from both supported registry contexts');
+A.ok((hooks.match(/ReadRegStr \$R1 HK(?:CU|LM).*Uninstall\\Agent OS" "InstallLocation"/g) || []).length === 2,
+  'transitional: an install recorded under the Agent OS name is found from both registry contexts too');
+A.ok(hooks.indexOf('Uninstall\\StarNet" "UninstallString"') < hooks.indexOf('Uninstall\\Agent OS" "UninstallString"'),
+  'the StarNet record is tried first, so every existing install behaves exactly as before');
 A.ok(hooks.includes('StrCpy $R1 $R1 -1 1') && hooks.includes('StrCpy $INSTDIR $R1'),
   'manual upgrade removes registry quotes and restores the exact previous install directory');
 A.ok(hooks.includes('StrCpy $CMDLINE "$CMDLINE /UPDATE /P /R"'), 'strict manual upgrades become passive in-place updates with relaunch');

@@ -84,6 +84,18 @@ Function StarNetManualUpgradeInit
     ReadRegStr $R9 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\StarNet" "DisplayVersion"
     ReadRegStr $R1 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\StarNet" "InstallLocation"
   ${EndIf}
+  ; Transitional: once productName becomes "Agent OS" the uninstall record lives under that key instead.
+  ; Look there too, so an installer of either name finds an install of either name (docs/PRODUCT-NAME-MIGRATION.md).
+  ${If} $R8 == ""
+    ReadRegStr $R8 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Agent OS" "UninstallString"
+    ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Agent OS" "DisplayVersion"
+    ReadRegStr $R1 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Agent OS" "InstallLocation"
+  ${EndIf}
+  ${If} $R8 == ""
+    ReadRegStr $R8 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Agent OS" "UninstallString"
+    ReadRegStr $R9 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Agent OS" "DisplayVersion"
+    ReadRegStr $R1 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Agent OS" "InstallLocation"
+  ${EndIf}
   ${If} $R8 == ""
     Goto starnet_manual_upgrade_done
   ${EndIf}
