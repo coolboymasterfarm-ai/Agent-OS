@@ -33,7 +33,7 @@ A.ok(CAP_REGISTRY.teamlead.every(g => g.capId === 'orchestrator'), 'teamlead sha
 const lent = resolveTools('foreman', { agents: { foreman: { id: 'foreman', room: 'r' } }, rooms: { r: { id: 'r', objects: [{ instanceId: 't', objectType: 'teamlead' }] } } }).tools;
 A.ok(lent.includes('team.dispatch') && !lent.some(t => /summon|spawn|routine|station\./.test(t)), 'a lent team lead can dispatch but not summon, spawn, schedule or run the station');
 const IDX = fs.readFileSync(path.join(__dirname, '..', 'sidecar', 'index.js'), 'utf8');
-A.ok(/objectType !== 'builder' && objectType !== 'teamlead'/.test(IDX), 'the full-power sweep never confers teamlead on everyone');
+A.ok(/const LENT = \['builder', 'teamlead'\];/.test(IDX) && /!LENT\.includes\(objectType\)/.test(IDX), 'the full-power sweep never confers teamlead on everyone');
 
 /* ---------- team.dispatch: Ultron -> manager -> members ---------- */
 const fakeRunOnce = () => { const calls = []; const fn = async o => { calls.push(o); return { reason: 'done', messages: [{ role: 'assistant', content: 'out:' + o.agentId }], usd: 0.1 }; }; fn.calls = calls; return fn; };
