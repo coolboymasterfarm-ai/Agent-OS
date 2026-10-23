@@ -1,4 +1,4 @@
-/* StarNet phosphor typography and production menu-glass, with a clear reading layout. */
+/* Agent OS phosphor typography and production menu-glass, with a clear reading layout. */
 @import url('../styles.css?v=20260913-brand-nav');
 html:has(body.docs-page){scroll-behavior:auto}
 .docs-page{

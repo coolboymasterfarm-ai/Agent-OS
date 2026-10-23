@@ -1,4 +1,4 @@
-/* StarNet site — boot sequence, platform detect, live release links, motion */
+/* Agent OS site — boot sequence, platform detect, live release links, motion */
 (function(){
   'use strict';
 
@@ -21,7 +21,7 @@
 
   var RELEASES_REPO = 'androoAGI/starnet-releases';
 
-  // StarNet Credits (managed plans). The billing service is a separate host; until it is
+  // Agent OS Credits (managed plans). The billing service is a separate host; until it is
   // deployed `live:false` keeps every buy button honest — no button on this site may imply
   // a purchase we cannot actually take. Flip `live` to true once the service answers.
   var CREDITS = {
@@ -50,7 +50,7 @@
 
   /* ---------- boot sequence (once per session) ---------- */
   var bootLines = [
-    '> STARNET TERMLINK',
+    '> AGENT OS TERMLINK',
     '> ESTABLISHING UPLINK ........... OK',
     '> STATION MANIFEST LOADED ....... OK',
     '> RENDERING TERMINAL'

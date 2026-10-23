@@ -20,6 +20,7 @@ const KEEP = [
   [/\(\?:STARNET\|SKYNET\)_/, 'env-name prefix regexes (strip/gate STARNET_*/SKYNET_*)'],
   [/MARKET_NAME\s*=|skill package\\0v1|opts\.author \|\| 'StarNet'|doc\.author \|\| 'StarNet'/, 'signed skill catalog / package digest bytes'],
   [/EARLY_ACCESS_BLURB/, 'names the app as registered with Google; its consent screen still says StarNet until that OAuth app is renamed'],
+  [/renamed to StarNet on 2026-06-22|show it as (?:"|&quot;)StarNet(?:"|&quot;)/, 'legal wording: true rename history, and the installed app is still listed as StarNet until productName changes'],
   [/app: 'StarNet'|o\.app \|\| 'StarNet'/, 'config-export envelope stamp'],
 ];
 const SKIP_DIR = new Set(['node_modules', '.git', 'vendor', 'dist']);
@@ -36,7 +37,7 @@ function walk(dir) {
     });
   }
 }
-for (const d of ['frontend', 'sidecar', 'shared']) walk(path.join(root, d));
+for (const d of ['frontend', 'sidecar', 'shared', 'website']) walk(path.join(root, d));
 // Rust shell: user-visible string literals (dialogs, tray, window title, errors) say Agent OS. Comments are not scanned;
 // the on-disk folder joins stay StarNet on purpose.
 const RUST_KEEP = [/\.join\("StarNet"\)/, /"StarNet"\)\.join|\[\s*"StarNet"/, /`StarNet`/];
