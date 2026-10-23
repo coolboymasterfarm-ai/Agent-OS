@@ -40,7 +40,7 @@
     for (const root of (Array.isArray(opts.legacyWorkspaces) ? opts.legacyWorkspaces : [])) addRoot(root);
     for (const appBase of [env.LOCALAPPDATA, env.APPDATA, env.XDG_DATA_HOME]) {
       if (!appBase) continue;
-      addRoot(pathMod.join(appBase, 'Agent OS', 'workspaces'));
+      addRoot(pathMod.join(appBase, 'StarNet', 'workspaces'));
       addRoot(pathMod.join(appBase, 'Skynet', 'workspaces'));
       addRoot(pathMod.join(appBase, 'ai.skynet.harness', 'workspaces'));
     }

@@ -39,7 +39,7 @@
   function agentModelBlocker(providerId, model) {
     if (!isImageModel(providerId, model)) return null;
     return 'Model unavailable for agent chat: "' + String(model || '').trim()
-      + '" generates images and does not support StarNet\'s streaming, tool-calling agent wire. '
+      + '" generates images and does not support Agent OS\'s streaming, tool-calling agent wire. '
       + 'Choose a text model in COMMS; for image requests that agent will use the placed STUDIO with your OpenAI API key. No provider request was sent.';
   }
 

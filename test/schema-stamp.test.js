@@ -3,7 +3,7 @@
 
    Part 1: boot a fresh sidecar on an empty workspace → assert <WORKSPACES>/.schema-version.json is written with
            { version:1, schemaVersion:1, stampedAt }.
-   Part 2: pre-seed a workspace with schemaVersion:2 (a NEWER StarNet wrote it), boot this (older) sidecar → assert
+   Part 2: pre-seed a workspace with schemaVersion:2 (a NEWER Agent OS wrote it), boot this (older) sidecar → assert
            it enters DEGRADED mode: POST /api/roster and POST /api/save are REFUSED with the honest error, but GET
            /api/save still serves (reads never blocked) and the boot log warns loudly.
 
@@ -39,7 +39,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   {
     const fixture = SidecarFixture.create({ prefix: 'sk-schema-newer-' });
     const ws = fixture.workspace;
-    // A NEWER StarNet already wrote this workspace: schemaVersion 2 > the 1 this sidecar understands.
+    // A NEWER Agent OS already wrote this workspace: schemaVersion 2 > the 1 this sidecar understands.
     fs.writeFileSync(path.join(ws, '.schema-version.json'), JSON.stringify({ version: 1, schemaVersion: 2, stampedAt: Date.now() }));
     await fixture.start();
     const B = fixture.baseUrl;
@@ -64,7 +64,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
       A.eq(rosterRes.status, 200, 'degraded roster POST answers 200 (honest payload, not 5xx)');
       const rosterJson = await rosterRes.json();
       A.eq(rosterJson.ok, false, 'degraded roster POST is refused (ok:false)');
-      A.eq(rosterJson.error, 'workspace written by newer StarNet', 'degraded roster POST carries the honest error');
+      A.eq(rosterJson.error, 'workspace written by newer Agent OS', 'degraded roster POST carries the honest error');
       // the on-disk roster was NOT written (the refusal happened before any write)
       A.ok(!fs.existsSync(path.join(ws, 'agent.roster.json')), 'degraded roster POST wrote nothing to disk');
 
@@ -76,7 +76,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
       A.eq(saveRes.status, 200, 'degraded save POST answers 200');
       const saveJson = await saveRes.json();
       A.eq(saveJson.ok, false, 'degraded save POST is refused (ok:false)');
-      A.eq(saveJson.error, 'workspace written by newer StarNet', 'degraded save POST carries the honest error');
+      A.eq(saveJson.error, 'workspace written by newer Agent OS', 'degraded save POST carries the honest error');
 
       // GET /api/save STILL SERVES (reads are never blocked in degraded mode)
       const readRes = await fetch(B + '/api/save?agent=agent', { headers: { 'X-StarNet-Token': token, Origin: B } });

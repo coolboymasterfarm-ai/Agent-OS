@@ -590,7 +590,7 @@ function defaultWorkspaces() {
   // Skynet→Agent OS rename back-compat: prefer the NEW dir; if it doesn't exist yet but the OLD one does, keep
   // using the old one IN PLACE (no move) so existing data is never lost and any old-code process that still
   // looks for \Skynet\ keeps sharing the same data (no split-brain). Fresh installs land under \StarNet\.
-  const neu = path.join(base, 'Agent OS', 'workspaces');
+  const neu = path.join(base, 'StarNet', 'workspaces');
   const old = path.join(base, 'Skynet', 'workspaces');   // legacy pre-rename location — read in place, never renamed
   try { if (!fs.existsSync(neu) && fs.existsSync(old)) return old; } catch (_) {}
   return neu;
@@ -14127,7 +14127,7 @@ async function handleConfigExport(req, res) {
   let body; try { body = JSON.parse(await readBody(req, 1 << 20)) || {}; } catch (e) { return json(400, { error: 'bad json' }); }
   const snap = collectExportSnapshot(body.sections);
   let env;
-  try { env = configExport.buildExport(snap, { now: Date.now(), app: 'Agent OS', only: Array.isArray(body.only) ? body.only : null }); }
+  try { env = configExport.buildExport(snap, { now: Date.now(), app: 'StarNet', only: Array.isArray(body.only) ? body.only : null }); }
   catch (e) { return json(409, { ok: false, error: (e && e.message) || 'configuration cannot be exported safely' }); }
   return json(200, env);
 }
@@ -17466,7 +17466,7 @@ function workshopDefaultDest(man, runId) {
   try { if (!fs.existsSync(base)) base = home; } catch (_) { base = home; }
   const slug = String((man && man.title) || 'deliverable').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'deliverable';
   const runTag = String(runId || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 8) || 'run';
-  return path.join(base, 'Agent OS deliverables', slug + '-' + runTag);
+  return path.join(base, 'StarNet deliverables', slug + '-' + runTag);
 }
 
 // what Implement (decide keep) WILL actually do for this manifest, resolved against the CURRENT blessed

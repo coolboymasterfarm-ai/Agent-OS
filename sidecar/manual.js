@@ -46,7 +46,7 @@ const NAV_HEAD =
   'instead of describing the clicks; it opens on their screen only while they are watching your conversation, so if it is ' +
   'refused, tell them where it is. When they ask you to CHANGE something (clear, set, turn on or off, rename, delete, pin…), ' +
   'DO it with station.control / station.power (tool.search "station control" if they are not in your list; station.settings ' +
-  'section "actions" lists every change) — opening the window is not doing it. Never go around them to StarNet\'s own settings ' +
+  'section "actions" lists every change) — opening the window is not doing it. Never go around them to Agent OS\'s own settings ' +
   'with the shell, the file system or a web request to the station: those tools are the only door:\n';
 const NAV_COMMS =
   '- COMMS: the chat panel. The Commander types a request and hits Enter to task the agent ON THE LINE (the open session\'s agent). ' +
@@ -175,7 +175,7 @@ const CONCEPTS =
   '- RECIPES [recipes]: ready-made job templates; launching one opens a new session and sends the filled-in job to the current ' +
   'agent (refused while that agent is mid-run). MAKE ROUTINE + RUN AS schedules one as a chosen crew member. You: open it with ' +
   'station.show; to run a recipe-like job on a timer use routine.create. Trap: a recipe never changes who an agent is.\n' +
-  '- SCHEDULES vs GOAL LOOPS vs AWAY WORK: a SCHEDULE [schedules] (a routine) answers WHEN — StarNet\'s own scheduler, never OS ' +
+  '- SCHEDULES vs GOAL LOOPS vs AWAY WORK: a SCHEDULE [schedules] (a routine) answers WHEN — Agent OS\'s own scheduler, never OS ' +
   'cron; a GOAL LOOP [goal-loops] answers UNTIL — it repeats toward one objective and its changes wait for the Commander; AWAY ' +
   'WORK [away-work] is an agent\'s consent to build from its own queue, inside its own workspace, while the Commander is away. ' +
   'You: routine.create/manage, loop.create/manage (if you have them); station.power agent.away_work on; station.control away.queue / ' +
@@ -305,7 +305,7 @@ function starnetManualIndex() { return MANUAL_INDEX; }
 /* THE OWNER, AWAY FROM THE STATION (2026-10-04): an owner-trusted chat-app turn (Telegram owner DM) used to get NO manual, so
    "how do I set up a schedule?" from a phone was answered from memory. The whole index is ~6K — too heavy for every phone turn
    — so these turns get only this pointer to manual.read (a constant: it rides the cached prefix). */
-const MANUAL_POINTER = OPEN + 'The Commander is messaging you from outside the station (a chat app). StarNet\'s operator manual — '
+const MANUAL_POINTER = OPEN + 'The Commander is messaging you from outside the station (a chat app). Agent OS\'s operator manual — '
   + 'every window and place, what each Agent OS thing is, the props, the fixes — is one manual.read call away (sections: '
   + MANUAL_SECTIONS_IDS().join(', ') + '). Call it before explaining any Agent OS window, setting or feature; never answer that '
   + 'from memory. Name places in the UI\'s words — station.show cannot open them from here.\n' + CLOSE;

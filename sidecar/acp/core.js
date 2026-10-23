@@ -385,7 +385,7 @@
       let text = turn.text;
       if (turn.images) {
         text += (text ? '\n\n' : '') + '[' + turn.images + ' image(s) were attached in the editor but could not be '
-          + 'forwarded: StarNet\'s ACP bridge does not carry image attachments yet. Say so if the answer depends on them.]';
+          + 'forwarded: Agent OS\'s ACP bridge does not carry image attachments yet. Say so if the answer depends on them.]';
       }
       if (turn.unsupported.length) log('prompt contained unsupported block type(s): ' + turn.unsupported.join(', '));
 

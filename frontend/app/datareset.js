@@ -120,7 +120,7 @@
     lines.push('Deleted ' + removed.length + ' Agent OS data location' + (removed.length === 1 ? '' : 's') + ' on this computer.');
     if (failed.length) lines.push('Could NOT delete ' + failed.length + ': ' + failed.map(f => f.path + ' (' + f.error + ')').join('; ') + '. Quit Agent OS and delete ' + (failed.length === 1 ? 'it' : 'them') + ' by hand.');
     if (kcFailed.length) lines.push('Could NOT remove ' + kcFailed.length + ' saved credential' + (kcFailed.length === 1 ? '' : 's') + ' from the system keychain: ' + kcFailed.join('; ') + '.');
-    else lines.push('Removed StarNet\'s saved keys and tokens from the system keychain.');
+    else lines.push('Removed Agent OS\'s saved keys and tokens from the system keychain.');
     if (v.autostartDisabled === false) lines.push('Launch at login could not be turned off; turn it off in your system settings.');
     lines.push(v.browserDataCleared === true ? 'Cleared this window\'s stored data.' : 'Could NOT clear this window\'s stored data' + (v.browserClearError ? ' (' + v.browserClearError + ')' : '') + '.');
     const complete = v.ok === true && v.browserDataCleared === true;
@@ -187,9 +187,9 @@
     const wrap = el('div', 'set-erase');
     wrap.appendChild(el('h4', 'ms-h', 'ERASE EVERYTHING'));
     const about = el('p', 'set-about');
-    about.innerHTML = 'Deletes everything Agent OS keeps on this computer and starts over at first run: your station, agents, chats, memory, routines and settings, saved browser sign-ins, files agents saved inside Agent OS, logs, the voice-model download, StarNet\'s saved keys and tokens in the system keychain, and this window\'s stored data. <b>This cannot be undone.</b> Export a backup first if you might want it.';
+    about.innerHTML = 'Deletes everything Agent OS keeps on this computer and starts over at first run: your station, agents, chats, memory, routines and settings, saved browser sign-ins, files agents saved inside Agent OS, logs, the voice-model download, Agent OS\'s saved keys and tokens in the system keychain, and this window\'s stored data. <b>This cannot be undone.</b> Export a backup first if you might want it.';
     wrap.appendChild(about);
-    wrap.appendChild(el('p', 'set-about dim', 'Not touched: project folders you let agents work in, files exported to "Agent OS deliverables", your Downloads folder, your Agent OS account and its credits (this computer is unlinked from it), and the Agent OS app itself (uninstall it separately).'));
+    wrap.appendChild(el('p', 'set-about dim', 'Not touched: project folders you let agents work in, files exported to "StarNet deliverables", your Downloads folder, your Agent OS account and its credits (this computer is unlinked from it), and the Agent OS app itself (uninstall it separately).'));
     if (!core) {
       wrap.appendChild(el('p', 'set-about dim', 'ERASE EVERYTHING runs in the Agent OS desktop app. Running Agent OS from source? Stop it, then delete the workspaces folder it was started with (the repo\'s workspaces/ folder, or the path in SKYNET_WORKSPACES).'));
       host.appendChild(wrap);

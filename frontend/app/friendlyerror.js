@@ -733,11 +733,11 @@
      cloud failure (sidecar/index.js linkStartFailure). Lower-case lead, no trailing period (callers add their own). */
   function linkStartFailure(info) {
     const i = info || {}, j = i.j || {};
-    if (i.local) return 'StarNet\'s engine on this computer isn\'t answering, so the link could not start — restart Agent OS, then try again';
-    if (i.status === 503 && j.degraded) return 'StarNet\'s engine on this computer stopped after an error, so the link could not start — restart Agent OS, then try again';
+    if (i.local) return 'Agent OS\'s engine on this computer isn\'t answering, so the link could not start — restart Agent OS, then try again';
+    if (i.status === 503 && j.degraded) return 'Agent OS\'s engine on this computer stopped after an error, so the link could not start — restart Agent OS, then try again';
     if (i.status === 404 && j.error === 'linking_unavailable') return 'account linking isn\'t available in this build of Agent OS';
     const detail = j.detail ? ' (' + String(j.detail) + ')' : '';
-    if (j.reason === 'tls') return 'security software on this computer (an antivirus HTTPS scan or a proxy) is blocking StarNet\'s secure connection to the Agent OS account service' + detail + ' — allow Agent OS, then try again';
+    if (j.reason === 'tls') return 'security software on this computer (an antivirus HTTPS scan or a proxy) is blocking Agent OS\'s secure connection to the Agent OS account service' + detail + ' — allow Agent OS, then try again';
     if (j.reason === 'timeout') return 'the Agent OS account service did not answer in time — check a VPN or firewall, then try again';
     if (j.reason === 'dns' || j.reason === 'unreachable') return 'Agent OS could not reach the Agent OS account service from this computer' + detail + ' — check a VPN or firewall, then try again';
     if (j.reason === 'cloud_5xx') return 'the Agent OS account service is having trouble right now — try again in a minute';

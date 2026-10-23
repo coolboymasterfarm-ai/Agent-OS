@@ -129,7 +129,7 @@ A.ok(/YOUR CHROME[^\n]*not offered/.test(read('frontend/app/outputbrowser.js')),
 const Friendly = require('../frontend/app/friendlyerror.js');
 for (const o of [undefined, { cancelSource: 'estop_by_run' }]) {
   const line = Friendly.stopLine('cancelled', o);
-  A.ok(!/E-STOP/.test(line) && /Pause Automation in the StarNet tray menu/.test(line), 'stop line names the tray\'s Pause Automation: ' + line);
+  A.ok(!/E-STOP/.test(line) && /Pause Automation in the Agent OS tray menu/.test(line), 'stop line names the tray\'s Pause Automation: ' + line);
 }
 
 /* ---- org P05: "where do I paste my key?" has one answer per kind of key ----

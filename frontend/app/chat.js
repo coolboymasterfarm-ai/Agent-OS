@@ -1373,7 +1373,7 @@ const Chat = (() => {
     if (contextIssue) {
       const model = (typeof Harness !== 'undefined' && Harness.getModel) ? Harness.getModel() : 'this model';
       const limit = (typeof U !== 'undefined' && U.tokens) ? U.tokens(contextIssue.limit) : contextIssue.limit;
-      const note = 'Paste kept — it may exceed ' + model + '\'s ' + limit + '-token context once StarNet\'s working context is included. Choose a larger-context model or split the text; nothing was sent.';
+      const note = 'Paste kept — it may exceed ' + model + '\'s ' + limit + '-token context once Agent OS\'s working context is included. Choose a larger-context model or split the text; nothing was sent.';
       localLine(note);
       if (typeof StationUI !== 'undefined' && StationUI.notify) StationUI.notify('paste kept — selected model context is too small', 'warn');
       return;
@@ -5568,7 +5568,7 @@ const Chat = (() => {
     implBtn.title = (plan && plan.action === 'apply') ? ('applies this patch to a new branch in ' + plan.root)
       : patchSaveOnly ? 'saves the .patch file only — it will NOT be applied to your project'
       : buildable ? ('has ' + who + ' BUILD what this describes — nothing is copied to a folder')
-      : ('saves the files to ' + ((plan && plan.dest) || 'your Agent OS deliverables folder'));
+      : ('saves the files to ' + ((plan && plan.dest) || 'your StarNet deliverables folder'));
     // why a build can be refused, in the Commander's words — never a raw reason code.
     const implFailCopy = (reason) => {
       const r = String(reason || '');
@@ -5625,8 +5625,8 @@ const Chat = (() => {
       const saved = res.applied
         ? ('✓ implemented — applied to branch ' + (res.branch || '?') + (res.root ? (' in ' + res.root) : ''))
         : res.savedOnly
-          ? ('⚠ patch file saved to ' + (res.destPath || 'your Agent OS deliverables folder') + ' — NOT applied to your project')
-          : ('✓ implemented — files saved to ' + (res.destPath || 'your Agent OS deliverables folder'));
+          ? ('⚠ patch file saved to ' + (res.destPath || 'your StarNet deliverables folder') + ' — NOT applied to your project')
+          : ('✓ implemented — files saved to ' + (res.destPath || 'your StarNet deliverables folder'));
       decideNote(saved); sendNote(); settle(saved, false, res.applied ? '' : (res.destPath || ''));
     };
     acts.appendChild(implBtn);

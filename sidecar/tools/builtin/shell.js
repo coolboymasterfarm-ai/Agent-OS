@@ -506,7 +506,7 @@
     const c = String(cmd == null ? '' : cmd), dialect = opts.dialect;
     const heads = commandHeads(c, dialect);
     if (heads.some(h => BROWSER_NAMES.has(exeName((headTokens(h)[0] || {}).value)))) {
-      return 'launches a browser outside StarNet\'s synthetic-input CDP sandbox — use browser.test_navigate/browser.test_input';
+      return 'launches a browser outside Agent OS\'s synthetic-input CDP sandbox — use browser.test_navigate/browser.test_input';
     }
     const entries = commandSourceEntries(c, opts);
     const sources = entries.map(e => e.text);
@@ -519,7 +519,7 @@
       return 'can inject/capture input, launch opaque code, or alter the user\'s interactive session';
     }
     if (sources.some(s => /(?:^|\s)--open(?:[=\s]|$)/i.test(s))) return 'opens a framework/browser window on the user\'s screen — keep dev servers headless';
-    if (BROWSER_AUTOMATION_RE.test(expanded)) return 'runs browser automation outside StarNet\'s owned pointer-lock emulator — use browser.test_*';
+    if (BROWSER_AUTOMATION_RE.test(expanded)) return 'runs browser automation outside Agent OS\'s owned pointer-lock emulator — use browser.test_*';
     if (entries.some(e => e.kind === 'code' ? guiRuntimeInCode(e.text) : guiRuntimeInCommand(e.text, e.dialect)) || heads.some(h => LOCAL_PROGRAM_RE.test(h && h.text != null ? h.text : String(h || '')))) return 'launches a GUI/native runtime on the user\'s interactive desktop';
     return null;
   }

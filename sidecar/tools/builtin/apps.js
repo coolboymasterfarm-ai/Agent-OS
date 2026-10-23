@@ -12,7 +12,7 @@
 'use strict';
 
 const GUIDE = [
-  'HOW An AGENT OS APP WORKS (keep to this):',
+  'HOW AN AGENT OS APP WORKS (keep to this):',
   '- An Agent OS app lives INSIDE Agent OS. If the Commander asked for something to host, ship or run elsewhere (a website for Netlify, a React project, a script, an extension), this was the wrong tool: build real files instead, and tell the Commander this empty app can be removed from APPS.',
   '- The app is ONE page: index.html (put CSS/JS inline or in style.css / app.js beside it). It opens in an Agent OS window.',
   '- IT IS THE COMMANDER\'S APP — it can be ANYTHING: a dashboard, a tracker, a calculator, a timer, a game, a canvas toy. If they describe a look, layout, colours, fonts, animation or behaviour, build EXACTLY that with your own CSS/JS/canvas/SVG — their wish beats the station style. Only when they did not say how it should look, make it native:',

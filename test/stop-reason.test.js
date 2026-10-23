@@ -67,7 +67,7 @@ const SAMPLES = [
   ["The reply hit the model's output limit while writing a large fs_write call: it was cut off 3 times in a row and never ran, so nothing from it was saved.", 'output_limit', /output limit while writing a large fs_write call/],
   ['run checkpoint failed: ENOSPC: no space left on device', 'checkpoint_failed', /free disk space/],
   ['blocked by your hook `deploy-freeze`: deploys are frozen until Friday', 'hook_blocked', /Your hook `deploy-freeze` blocked this run: deploys are frozen until Friday/],
-  ["context still too large after compacting: about 210,000 tokens remain against the model's 200,000-token window after 2 folds", 'context_overflow', /even after StarNet compacted it/]
+  ["context still too large after compacting: about 210,000 tokens remain against the model's 200,000-token window after 2 folds", 'context_overflow', /even after Agent OS compacted it/]
 ];
 for (const [msg, kind, words] of SAMPLES) {
   const s = SR.explainStop(msg), f = Friendly.explainStop(msg);
@@ -94,7 +94,7 @@ for (const n of [1, 2]) {
   A.eq(line, SR.stopSentence('empty', { toolsRan: n }), 'COMMS mirrors the chat wording for an empty end after ' + n + ' tool step(s)');
 }
 A.eq(Friendly.stopLine('empty', { toolsRan: 0 }), SR.stopSentence('empty'), 'COMMS mirrors the chat wording for an empty end with no tool step');
-A.ok(/outside this chat/.test(Friendly.stopLine('cancelled')) && /Pause Automation in the StarNet tray menu/.test(Friendly.stopLine('cancelled')), 'COMMS: a cancel that was not yours says it came from elsewhere, naming the tray\'s real Pause Automation');
+A.ok(/outside this chat/.test(Friendly.stopLine('cancelled')) && /Pause Automation in the Agent OS tray menu/.test(Friendly.stopLine('cancelled')), 'COMMS: a cancel that was not yours says it came from elsewhere, naming the tray\'s real Pause Automation');
 A.ok(!/E-STOP/.test(Friendly.stopLine('cancelled')) && !/E-STOP/.test(Friendly.stopLine('cancelled', { cancelSource: 'estop_by_run' })), 'COMMS: stop lines never name an E-STOP the desk does not show (org P30)');
 A.ok(/this run paused all automation/.test(Friendly.stopLine('cancelled', { cancelSource: 'estop_by_run' })) && /RESUME AUTOMATION/.test(Friendly.stopLine('cancelled', { cancelSource: 'estop_by_run' })), 'COMMS: the run\'s own automation pause keeps its line');
 A.eq(Friendly.stopLine('done'), '', 'COMMS: a clean end has no stop line');
@@ -141,7 +141,7 @@ A.ok(/function noteStopReason\(/.test(chat) && /m\.stopped && m\.stopNote\) tool
     GoalLoop, { id: 'w' }, () => null, t => { lines.push(t); return row; }, () => {}, () => { kicked++; }, { openTerm: (k, sec) => opened.push(k + ':' + sec) }, doc);
   goal('ship the landing page');
   A.ok(/^⊙ goal set for this session only: ship the landing page \(budget 8 turns\)\./.test(lines[0]) && !/ {2}|lasting goal loops/.test(lines[0]), 'the /goal set line says session-only, one space before the budget, no dangling door label: ' + lines[0]);
-  A.ok(/It works while StarNet is open and stays with this session through a reload\./.test(lines[0]), 'org P19: it says when it runs — while StarNet is open, and that a reload keeps it on this session');
+  A.ok(/It works while Agent OS is open and stays with this session through a reload\./.test(lines[0]), 'org P19: it says when it runs — while Agent OS is open, and that a reload keeps it on this session');
   const doorRow = row.kids.find(k => k && k.className === 'sys-doors');
   A.ok(doorRow && doorRow.kids[0] && doorRow.kids[0].className === 'sys-doors-lead' && doorRow.kids[0].textContent === 'Lasting goal loops:', 'P29 polish: the door rides a row of its own, labelled Lasting goal loops:');
   const door = doorRow && doorRow.kids.find(k => k && k.className && /goal-loops-door/.test(k.className));
