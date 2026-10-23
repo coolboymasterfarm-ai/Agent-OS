@@ -18,7 +18,7 @@
   "expectedClaimCount": 37,
   "releaseSurface": {
     "algorithm": "sha256",
-    "sourceCommit": "f08c0b0dcfdec2b9a5b7dd941e62fb5b7dc0fecd",
+    "sourceCommit": "3b222a01ff4d1e51c5fb4c6c91bc58c3392bf1a7",
     "pathSetSha256": "0b994c355e0e1a7ac8f6d319a722c67ac870b5c4e2cc14960358a92d6302e9ce",
     "files": [
       {
@@ -533,8 +533,8 @@
       },
       {
         "path": "frontend/app/glass-demo.js",
-        "bytes": 13466,
-        "sha256": "b220465b27e81e49111de35b8f8560b2f114af95c224bb696afd49e2669dcfd9"
+        "bytes": 13654,
+        "sha256": "884525b5fc8bcb10c142f384a8d5514526efaffffdf40a61a2b4a32e6e86838c"
       },
       {
         "path": "frontend/app/glossary.js",
@@ -1088,8 +1088,8 @@
       },
       {
         "path": "frontend/app/secondbrain.js",
-        "bytes": 37371,
-        "sha256": "38baa4941974f9b570d5fe5751d01eaef1e4962b0679fa23fba8456ec472b247"
+        "bytes": 94203,
+        "sha256": "173d455ebbf4ec3d7b69486b85a0fe756fff9766172346983d2a7ac10be165b8"
       },
       {
         "path": "frontend/app/seedcredit.js",

@@ -134,6 +134,29 @@ agent's notebook.
 - **AGENT DOSSIER ▸ BRAIN** — the same graph scoped to one agent.
 - **AGENT DOSSIER ▸ MEMORY** — unchanged; pin / edit / forget / rate still lives there.
 
+The window opens wide and nearly full-height, and the brain is a holographic 3D point-cloud you can orbit
+(drag), zoom (scroll / pinch) and fly into (double-click). It is laid out as anatomy, from the roster:
+
+| Where | Who / what |
+| --- | --- |
+| Core | **Ultron** — the hub; axons run from it to every team lead |
+| Frontal lobe | Product — head of product (lead), product manager, market researcher |
+| Parietal lobe | Engineering — engineering manager (lead) and the engineers |
+| Occipital lobe | Design — design lead, UX, UI |
+| Left temporal (language) | Growth — growth lead, content, social, outreach, docs |
+| Right temporal | QA — QA lead, UI tester, bug hunters |
+| Frontal base | Support — support lead, support agent |
+| Association cortex | any custom agent the table does not know (nobody is dropped) |
+| Cerebellum | imported graphify / basemode knowledge |
+| Ring around the core | projects and workstreams |
+
+Each belief orbits the agent that holds it; brighter = more trusted, bigger = recalled more. A lesson two agents
+share leans toward the border of their lobes and is drawn as a pale fibre through the middle — those are exactly the
+links the auto-improve pass reads, and **REFLECT** fires a spark wave along them. The left panel lists the whole crew
+by team (click a team to light its lobe); the right panel inspects whatever you click. **REPLAY** regrows the brain
+belief-by-belief in the order it was actually learned (from each belief's `createdAt`). Team mapping and placement
+are pinned by `test/secondbrain-view.test.js`.
+
 The canvas is fed by the station's existing SSE bridge (`world.js` re-emits every server channel event onto
 `U.bus`), so what you see is real telemetry, never a simulation:
 
