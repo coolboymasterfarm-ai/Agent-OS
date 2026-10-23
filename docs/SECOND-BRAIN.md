@@ -134,6 +134,11 @@ agent's notebook.
 - **AGENT DOSSIER ▸ BRAIN** — the same graph scoped to one agent.
 - **AGENT DOSSIER ▸ MEMORY** — unchanged; pin / edit / forget / rate still lives there.
 
+The canvas is drawn as an actual brain (side view). Each agent owns a lobe and its beliefs cluster around its hub;
+imported graphify/basemode knowledge sits in the cerebellum; projects and workstreams sit at the core. Links bow
+through the middle like nerve fibres, and **cross-agent links glow gold** — those are the ones the auto-improve pass
+reads, and pressing **REFLECT** fires a spark wave along them.
+
 The canvas is fed by the station's existing SSE bridge (`world.js` re-emits every server channel event onto
 `U.bus`), so what you see is real telemetry, never a simulation:
 

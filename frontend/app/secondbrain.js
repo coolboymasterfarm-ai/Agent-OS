@@ -23,6 +23,47 @@ const SecondBrain = (() => {
   const REFRESH_DEBOUNCE = 1200;    // a burst of writes repaints once, not per record
   const AGENT_COLORS = ['#ffd34a', '#6fb3bf', '#7bc88a', '#d99a5a', '#a888c0', '#cf7d96'];
   const KIND_COLORS = { note: '#8fa3b0', fact: '#6fb3bf', profile: '#d99a5a', skill: '#7bc88a' };
+  const KNOWLEDGE_COLOR = '#9d7bd8';
+
+  // ---- THE ANATOMY. The graph lives inside a brain, in a fixed 1000×700 "brain space" (side view, facing left).
+  // Each agent owns a lobe, so its beliefs cluster where its hub sits; imported graphify/basemode knowledge lives in
+  // the cerebellum (reference, not belief); projects and workstreams sit at the core, where they bridge lobes.
+  const BW = 1000, BH = 700;
+  const CEREBRUM = 'M120 430C60 330 90 170 230 110C360 40 560 40 700 90C820 130 900 220 890 330C885 400 850 440 800 455' +
+    'C760 470 720 470 690 460C620 500 520 520 430 500C340 480 300 470 260 480C190 495 140 475 120 430Z';
+  const CEREBELLUM = 'M660 470C700 440 820 445 860 485C900 530 860 590 780 595C710 600 650 560 660 470Z';
+  const STEM = 'M610 470C630 520 640 580 630 660L690 660C690 590 700 530 700 470Z';
+  const LOBES = [[250, 270], [560, 170], [790, 320], [470, 420], [390, 190], [680, 250], [190, 380], [600, 360]];
+  const ZONE = { knowledge: [770, 525], core: [520, 300] };
+  // sulci: fixed hand-placed folds so the texture is identical every frame (no noise, no flicker)
+  const SULCI = [
+    'M420 75C440 160 400 230 450 330', 'M180 260C260 250 300 300 380 290', 'M300 140C330 190 290 230 340 270',
+    'M560 70C580 140 540 200 600 250', 'M680 120C650 190 700 230 680 300', 'M780 170C760 230 820 270 790 350',
+    'M250 380C330 360 420 400 520 380', 'M470 460C540 440 600 470 660 430', 'M160 330C200 300 240 340 290 320',
+    'M520 240C580 270 640 230 720 270', 'M820 380C780 400 760 430 720 430'
+  ];
+  const FOLIA = ['M680 495C740 480 820 485 860 510', 'M675 525C740 510 830 515 870 540', 'M690 555C750 545 820 550 855 568', 'M715 582C760 575 810 578 835 588'];
+  let hitCtx = null;
+  function inBrain(x, y) {
+    if (!hitCtx && typeof document !== 'undefined') hitCtx = document.createElement('canvas').getContext('2d');
+    if (!hitCtx || typeof Path2D === 'undefined') return true;
+    return hitCtx.isPointInPath(BRAIN_PATHS().all, x, y);
+  }
+  let paths = null;
+  function BRAIN_PATHS() {
+    if (paths) return paths;
+    const all = new Path2D(CEREBRUM);
+    all.addPath(new Path2D(CEREBELLUM));
+    all.addPath(new Path2D(STEM));
+    paths = { cerebrum: new Path2D(CEREBRUM), cerebellum: new Path2D(CEREBELLUM), stem: new Path2D(STEM), all: all,
+      sulci: SULCI.map(d => new Path2D(d)), folia: FOLIA.map(d => new Path2D(d)) };
+    return paths;
+  }
+  // brain space → screen: fit the 1000×700 box into the stage, aspect kept
+  function view(w, h) {
+    const s = Math.min(w / BW, h / BH) * 0.96;
+    return { s: s, ox: (w - BW * s) / 2, oy: (h - BH * s) / 2 };
+  }
 
   // ---- tiny DOM helpers (the app's own idiom: mkEl/esc, but this module stays standalone) ----
   function el(tag, cls, html) {
@@ -52,8 +93,8 @@ const SecondBrain = (() => {
     '.sb-stat span{display:block;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8b8f96;margin-top:2px}',
     '.sb-body{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:10px;min-height:420px}',
     '@media(max-width:900px){.sb-body{grid-template-columns:minmax(0,1fr)}}',
-    '.sb-stage{position:relative;border:1px solid rgba(255,211,74,.14);border-radius:6px;background:radial-gradient(ellipse at 50% 45%,rgba(255,211,74,.05),rgba(0,0,0,.35) 70%);overflow:hidden;min-height:420px}',
-    '.sb-canvas{display:block;width:100%;height:100%;cursor:crosshair}',
+    '.sb-stage{position:relative;border:1px solid rgba(255,211,74,.14);border-radius:6px;background:radial-gradient(ellipse at 50% 45%,rgba(255,211,74,.05),rgba(0,0,0,.35) 70%);overflow:hidden;min-height:480px}',
+    '.sb-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;cursor:crosshair}',
     '.sb-legend{position:absolute;left:10px;bottom:8px;display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:#9aa0a7;pointer-events:none}',
     '.sb-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}',
     '.sb-hint{position:absolute;right:10px;top:8px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#6f747b}',
@@ -109,7 +150,7 @@ const SecondBrain = (() => {
     const body = el('div', 'sb-body');
     const stage = el('div', 'sb-stage');
     const canvas = el('canvas', 'sb-canvas');
-    const hint = el('div', 'sb-hint', 'click a node · scroll to zoom');
+    const hint = el('div', 'sb-hint', 'click a neuron to inspect it');
     const legend = el('div', 'sb-legend');
     const side = el('div', 'sb-side');
     const feedPanel = el('div', 'sb-panel');
@@ -195,19 +236,32 @@ const SecondBrain = (() => {
         agentCol[n.agentId] = n.color || AGENT_COLORS[ai % AGENT_COLORS.length];
         ai++;
       }
-      const total = picked.length || 1;
-      picked.forEach((n, i) => {
-        const angle = i * 2.399963229728653;   // golden angle — a sunflower, so nothing overlaps at t=0
-        const rad = 22 + Math.sqrt(i / total) * Math.min(state.w || 520, state.h || 420) * 0.42;
+      // every agent gets its own lobe, in roster order, so the same crew always maps to the same brain
+      const lobeOf = {};
+      let li = 0;
+      for (const n of g.nodes || []) if (n.type === 'agent' && !lobeOf[n.agentId]) lobeOf[n.agentId] = LOBES[li++ % LOBES.length];
+      const anchorOf = n => n.type === 'knowledge' ? ZONE.knowledge
+        : (n.type === 'project' || n.type === 'stream') ? ZONE.core
+        : (lobeOf[n.agentId] || ZONE.core);
+      const seen = {};
+      picked.forEach(n => {
         const isAgent = n.type === 'agent';
+        const a = anchorOf(n);
+        const k = a[0] + ',' + a[1];
+        const i = seen[k] = (seen[k] || 0) + 1;
+        const angle = i * 2.399963229728653;   // golden angle — a sunflower per lobe, so nothing overlaps at t=0
+        const rad = isAgent ? 0 : 10 + Math.sqrt(i) * 9;
         const node = {
           id: n.id, type: n.type, label: n.label, agentId: n.agentId || null, kind: n.kind || null,
           trust: n.trust, useCount: n.useCount, pinned: n.pinned, projectRoot: n.projectRoot,
-          x: (state.w || 520) / 2 + Math.cos(angle) * rad,
-          y: (state.h || 420) / 2 + Math.sin(angle) * rad,
+          ax: a[0], ay: a[1],
+          x: a[0] + Math.cos(angle) * rad,
+          y: a[1] + Math.sin(angle) * rad,
           vx: 0, vy: 0,
           r: isAgent ? 13 + Math.min(12, Math.sqrt(num(n.memories) + 1) * 3) : n.type === 'project' || n.type === 'stream' ? 8 : 4.2,
-          color: isAgent ? (agentCol[n.agentId] || '#ffd34a') : (agentCol[n.agentId] || KIND_COLORS[n.kind] || '#8fa3b0'),
+          color: isAgent ? (agentCol[n.agentId] || '#ffd34a')
+            : n.type === 'knowledge' ? KNOWLEDGE_COLOR
+            : (agentCol[n.agentId] || KIND_COLORS[n.kind] || '#8fa3b0'),
           glow: 0, dim: 0
         };
         state.nodes.push(node);
@@ -219,11 +273,11 @@ const SecondBrain = (() => {
         if (!mem.length) continue;
         const cx = mem.reduce((s, n) => s + n.x, 0) / mem.length;
         const cy = mem.reduce((s, n) => s + n.y, 0) / mem.length;
-        const node = { id: c.id, type: 'concept', label: c.label, x: cx, y: cy, vx: 0, vy: 0, r: 6 + Math.min(10, Math.sqrt(c.size) * 1.6), color: '#5b6470', glow: 0, dim: 0 };
+        const node = { id: c.id, type: 'concept', label: c.label, ax: cx, ay: cy, x: cx, y: cy, vx: 0, vy: 0, r: 6 + Math.min(10, Math.sqrt(c.size) * 1.6), color: '#5b6470', glow: 0, dim: 0 };
         state.nodes.push(node);
         state.byId[node.id] = node;
       }
-      state.edges = (g.edges || []).map(e => ({ a: e.source, b: e.target, type: e.type, w: num(e.weight) || 1 }))
+      state.edges = (g.edges || []).map(e => ({ a: e.source, b: e.target, type: e.type, w: num(e.weight) || 1, cross: !!e.crossAgent }))
         .filter(e => state.byId[e.a] && state.byId[e.b]);
       state.loading = false;
       state.dirty = true;
@@ -237,7 +291,8 @@ const SecondBrain = (() => {
       for (const n of (g.nodes || [])) if (n.type === 'agent') { cols[n.agentId] = n.color || AGENT_COLORS[i % AGENT_COLORS.length]; i++; }
       return agents.map(a => '<span><i style="background:' + esc(cols[a.agentId] || '#ffd34a') + '"></i>' + esc(a.label) + '</span>').join('') +
         '<span><i style="background:#5b6470"></i>neighbourhood</span>' +
-        (num((g.stats || {}).knowledge) ? '<span><i style="background:#8fa3b0"></i>imported knowledge</span>' : '');
+        (num((g.stats || {}).knowledge) ? '<span><i style="background:' + KNOWLEDGE_COLOR + '"></i>imported knowledge</span>' : '') +
+        '<span><i style="background:#ffd34a;border-radius:0;height:2px"></i>cross-agent link</span>';
     }
 
     async function load(quiet) {
@@ -407,17 +462,16 @@ const SecondBrain = (() => {
         const fx = dx / d * f, fy = dy / d * f;
         a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
       }
-      const cx = state.w / 2, cy = state.h / 2;
+      // home pull: an agent hub is nailed to its lobe; its beliefs drift around it, and a cross-agent "similar" spring
+      // can drag a shared lesson toward the border between two lobes — which is exactly where it should read.
       for (const n of nodes) {
-        n.vx += (cx - n.x) * 0.0012;
-        n.vy += (cy - n.y) * 0.0012;
+        const k = n.type === 'agent' ? 0.05 : 0.004;
+        n.vx += (n.ax - n.x) * k;
+        n.vy += (n.ay - n.y) * k;
         n.vx *= 0.86; n.vy *= 0.86;
-        n.x += n.vx; n.y += n.vy;
-        const pad = n.r + 6;
-        if (n.x < pad) { n.x = pad; n.vx = Math.abs(n.vx) * 0.4; }
-        if (n.y < pad) { n.y = pad; n.vy = Math.abs(n.vy) * 0.4; }
-        if (n.x > state.w - pad) { n.x = state.w - pad; n.vx = -Math.abs(n.vx) * 0.4; }
-        if (n.y > state.h - pad) { n.y = state.h - pad; n.vy = -Math.abs(n.vy) * 0.4; }
+        const nx = n.x + n.vx, ny = n.y + n.vy;
+        if (inBrain(nx, ny)) { n.x = nx; n.y = ny; }
+        else { n.vx = (n.ax - n.x) * 0.05; n.vy = (n.ay - n.y) * 0.05; n.x += n.vx; n.y += n.vy; }   // hit the skull: fall back home
         if (n.glow > 0) n.glow = Math.max(0, n.glow - 0.012);
       }
       // pulses: a travelling spark from agent to belief (recall) or a pop at the agent (write)
@@ -432,22 +486,28 @@ const SecondBrain = (() => {
       const w = state.w, h = state.h, d = state.dpr;
       ctx.setTransform(d, 0, 0, d, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      // edges
+      const v = view(w, h);
+      ctx.setTransform(d * v.s, 0, 0, d * v.s, d * v.ox, d * v.oy);   // everything below is drawn in brain space
+      drawAnatomy();
+      // edges: curved like nerve fibres; the ones that cross agents are the brain's real cross-talk, so they glow
       for (const e of state.edges) {
         const a = state.byId[e.a], b = state.byId[e.b];
         if (!a || !b) continue;
         const dimmed = state.agentFilter && a.agentId !== state.agentFilter && b.agentId !== state.agentFilter && e.type !== 'in_concept';
-        ctx.globalAlpha = dimmed ? 0.04 : e.type === 'similar' ? 0.16 : 0.1;
-        ctx.strokeStyle = e.type === 'similar' ? '#6fb3bf' : e.type === 'in_concept' ? '#5b6470' : '#ffd34a';
-        ctx.lineWidth = e.type === 'similar' ? 0.9 : 0.6;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        const c = bend(a, b);
+        ctx.globalAlpha = dimmed ? 0.04 : e.cross ? 0.45 : e.type === 'similar' ? 0.18 : 0.1;
+        ctx.strokeStyle = e.cross ? '#ffd34a' : e.type === 'similar' ? '#6fb3bf' : e.type === 'in_concept' ? '#5b6470'
+          : /^(gfy|base)_/.test(e.type) ? KNOWLEDGE_COLOR : '#ffd34a';
+        ctx.lineWidth = e.cross ? 1.4 : e.type === 'similar' ? 0.9 : 0.6;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.x, c.y, b.x, b.y); ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      // pulses
+      // pulses: sparks ride the same fibre the edge draws
       for (const p of state.pulses) {
         const from = p.from, to = p.to || p.from;
-        if (!from) continue;
-        const x = from.x + (to.x - from.x) * p.age, y = from.y + (to.y - from.y) * p.age;
+        if (!from || p.age < 0) continue;   // negative age = still queued in a staggered wave
+        const t = p.age, c = bend(from, to), u = 1 - t;
+        const x = u * u * from.x + 2 * u * t * c.x + t * t * to.x, y = u * u * from.y + 2 * u * t * c.y + t * t * to.y;
         const fade = 1 - p.age;
         ctx.beginPath();
         ctx.fillStyle = 'rgba(255,211,74,' + (0.55 * fade) + ')';
@@ -465,6 +525,14 @@ const SecondBrain = (() => {
           ctx.arc(n.x, n.y, n.r + 10 * glow, 0, Math.PI * 2);
           ctx.fill();
         }
+        if (n.type === 'agent') {   // a lobe's hub reads as a lit neuron body, not just a bigger dot
+          const halo = ctx.createRadialGradient(n.x, n.y, n.r * 0.4, n.x, n.y, n.r * 3.2);
+          halo.addColorStop(0, n.color); halo.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.globalAlpha = (dimmed ? 0.1 : 0.28) + 0.3 * glow;
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 3.2, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = dimmed ? 0.22 : 1;
+        }
         ctx.beginPath();
         if (n.type === 'concept') {
           ctx.strokeStyle = n.color; ctx.lineWidth = 1.1; ctx.globalAlpha = (dimmed ? 0.1 : 0.5);
@@ -478,13 +546,14 @@ const SecondBrain = (() => {
         if (n.type === 'agent' || n === state.byId[state.selected]) {
           ctx.globalAlpha = dimmed ? 0.3 : 0.92;
           ctx.fillStyle = 'rgba(232,234,236,.92)';
-          ctx.font = (n.type === 'agent' ? '600 11px ' : '10px ') + 'VT323, monospace';
+          ctx.font = (n.type === 'agent' ? '600 ' + (13 / v.s) : (11 / v.s)) + 'px VT323, monospace';   // screen-size text
           ctx.textAlign = 'center';
-          ctx.fillText(String(n.label || '').slice(0, 22), n.x, n.y - n.r - 6);
-          if (n.useCount != null && n.type === 'memory') ctx.fillText(num(n.useCount) + '×', n.x, n.y + n.r + 12);
+          ctx.fillText(String(n.label || '').slice(0, 22), n.x, n.y - n.r - 6 / v.s);
+          if (n.useCount != null && n.type === 'memory') ctx.fillText(num(n.useCount) + '×', n.x, n.y + n.r + 12 / v.s);
         }
       }
       ctx.globalAlpha = 1;
+      ctx.setTransform(d, 0, 0, d, 0, 0);   // status text is screen-space again
       if (state.loading) {
         ctx.fillStyle = 'rgba(232,234,236,.6)'; ctx.font = '11px VT323, monospace'; ctx.textAlign = 'center';
         ctx.fillText('reading every notebook…', w / 2, h / 2);
@@ -499,6 +568,45 @@ const SecondBrain = (() => {
       }
     }
 
+    // control point that bows a link toward the brain's centre, so fibres arc through the white matter
+    function bend(a, b) {
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      return { x: mx + (ZONE.core[0] - mx) * 0.18, y: my + (ZONE.core[1] - my) * 0.18 };
+    }
+
+    function drawAnatomy() {
+      const P = BRAIN_PATHS();
+      const breathe = 0.5 + 0.5 * Math.sin(state.t * 0.9);   // a slow idle breath on the outline; decoration, not data
+      // tissue
+      const fill = ctx.createRadialGradient(470, 280, 40, 470, 300, 520);
+      fill.addColorStop(0, 'rgba(255,211,74,.09)'); fill.addColorStop(1, 'rgba(255,211,74,.015)');
+      ctx.fillStyle = fill;
+      ctx.fill(P.cerebrum); ctx.fill(P.stem);
+      ctx.fillStyle = 'rgba(157,123,216,.07)'; ctx.fill(P.cerebellum);
+      // folds, clipped to the tissue they belong to
+      ctx.save(); ctx.clip(P.cerebrum);
+      ctx.strokeStyle = 'rgba(255,211,74,.16)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (const s of P.sulci) ctx.stroke(s);
+      ctx.restore();
+      ctx.save(); ctx.clip(P.cerebellum);
+      ctx.strokeStyle = 'rgba(157,123,216,.18)'; ctx.lineWidth = 2;
+      for (const f of P.folia) ctx.stroke(f);
+      ctx.restore();
+      // outline with a soft glow
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,211,74,.55)'; ctx.shadowBlur = 14 + 8 * breathe;
+      ctx.strokeStyle = 'rgba(255,211,74,' + (0.38 + 0.14 * breathe) + ')'; ctx.lineWidth = 2;
+      ctx.stroke(P.cerebrum); ctx.stroke(P.stem);
+      ctx.shadowColor = 'rgba(157,123,216,.6)';
+      ctx.strokeStyle = 'rgba(157,123,216,.5)'; ctx.stroke(P.cerebellum);
+      ctx.restore();
+      // region captions, only where something actually lives there
+      ctx.font = (10 / view(state.w, state.h).s) + 'px VT323, monospace'; ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(232,234,236,.32)';
+      if (state.nodes.some(n => n.type === 'knowledge')) ctx.fillText('KNOWLEDGE · graphify + basemode', 770, 625);
+      if (state.nodes.some(n => n.type === 'project' || n.type === 'stream')) ctx.fillText('CORE · projects', ZONE.core[0], ZONE.core[1] + 150);
+    }
+
     function loop() {
       if (!state.alive) return;
       // a rebuilt console throws its old panes away without calling destroy(); a detached host must stop its own
@@ -508,6 +616,7 @@ const SecondBrain = (() => {
       if (visible) {
         if (state.dirty) { fit(); state.dirty = false; }
         // settle hard for the first second after a load, then idle at a light simmer
+        state.t += 1 / 60;
         step();
         draw();
       }
@@ -516,9 +625,9 @@ const SecondBrain = (() => {
 
     // ---- interaction ----
     canvas.addEventListener('click', ev => {
-      const r = canvas.getBoundingClientRect();
-      const x = ev.clientX - r.left, y = ev.clientY - r.top;
-      let best = null, bestD = 18 * 18;
+      const r = canvas.getBoundingClientRect(), v = view(state.w, state.h);
+      const x = (ev.clientX - r.left - v.ox) / v.s, y = (ev.clientY - r.top - v.oy) / v.s;
+      let best = null, bestD = (18 / v.s) * (18 / v.s);
       for (const n of state.nodes) {
         const dx = n.x - x, dy = n.y - y, d2 = dx * dx + dy * dy;
         if (d2 < bestD) { bestD = d2; best = n; }
@@ -528,10 +637,11 @@ const SecondBrain = (() => {
       state.dirty = false;
     });
     canvas.addEventListener('mousemove', ev => {
-      const r = canvas.getBoundingClientRect();
-      const x = ev.clientX - r.left, y = ev.clientY - r.top;
+      const r = canvas.getBoundingClientRect(), v = view(state.w, state.h);
+      const x = (ev.clientX - r.left - v.ox) / v.s, y = (ev.clientY - r.top - v.oy) / v.s;
       let hit = null;
-      for (const n of state.nodes) { const dx = n.x - x, dy = n.y - y; if (dx * dx + dy * dy < (n.r + 5) * (n.r + 5)) { hit = n; break; } }
+      const pad = 5 / v.s;
+      for (const n of state.nodes) { const dx = n.x - x, dy = n.y - y; if (dx * dx + dy * dy < (n.r + pad) * (n.r + pad)) { hit = n; break; } }
       canvas.style.cursor = hit ? 'pointer' : 'crosshair';
     });
 
@@ -593,6 +703,14 @@ const SecondBrain = (() => {
             'They are waiting in the confirm deck — keep, edit or discard each one.'
           : 'Nothing to propose: the crew already holds what the graph shows. (Beliefs you discarded are never re-proposed.)';
         if (typeof notify === 'function' && out.total) notify('Second brain proposed ' + out.total + ' belief(s)', 'good');
+        // light the cross-agent fibres the reflector reads, as a staggered wave — real edges, not a decoration
+        let i = 0;
+        for (const e of state.edges) {
+          if (!e.cross || i >= 40) continue;
+          const a = state.byId[e.a], b = state.byId[e.b];
+          a.glow = b.glow = 1;
+          state.pulses.push({ from: a, to: b, at: Date.now(), age: -0.04 * i++ });
+        }
       } catch (e) {
         noteBox.textContent = 'Reflection failed — ' + ((e && e.message) || e);
       } finally { reflectBtn.disabled = false; }
