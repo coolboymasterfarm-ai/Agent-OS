@@ -343,6 +343,14 @@
       { capId: 'orchestrator', tool: 'station.plan', scope: 'read', requiresConsent: false, network: false, deferred: true },
       { capId: 'orchestrator', tool: 'station.build', scope: 'write', requiresConsent: true, network: false, deferred: true }
     ],
+    /* TEAMLEAD (teams): the SLICE of the orchestrator a team MANAGER is lent when the lead dispatches it — delegate to its
+       own members and check on them, nothing more (no summon, spawn, routines or station control). Never placed and never
+       in the full-power sweep: only dispatching a manager confers it, and the manager's roster is cut to its members, so
+       a member can never delegate again. Same capId as the orchestrator, so the TASK DELEGATION switch turns it off too. */
+    teamlead: [
+      { capId: 'orchestrator', tool: 'team.dispatch', scope: 'execute', requiresConsent: true, network: true },
+      { capId: 'orchestrator', tool: 'team.subagents', scope: 'read', requiresConsent: false, network: false }
+    ],
     // STUDIO (media skills): text->image generation + image vision analysis, both on the SAME BYOK OpenRouter
     // key the agent already uses (no new provider). image_generate WRITES a file into the agent's workspace, so
     // it is consent-gated like fs.write; image_analyze only READS an image and returns text (consent-free).

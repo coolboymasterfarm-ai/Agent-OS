@@ -2074,6 +2074,9 @@ let agentRosterUpdatedAt = 0;
 const AGENT_ROSTER_FILE = path.join(WORKSPACES, 'agent.roster.json');
 // CREW = every roster agent other than the one running — the same rows the [ORCHESTRATION] "YOUR TEAM" list renders.
 function crewCountFor(agentId) { let n = 0; for (const aid of agentRoster.keys()) if (aid !== agentId) n++; return n; }
+// TEAMS (sidecar/teams.js): teams.json sits beside the roster. Read per use (it is tiny); a missing or bad file is "no teams".
+const TEAMS_FILE = path.join(WORKSPACES, 'teams.json');
+function loadTeams() { try { return require('./teams.js').normalizeTeams(JSON.parse(fs.readFileSync(TEAMS_FILE, 'utf8'))); } catch (_) { return []; } }
 function replaceAgentRoster(list) {
   agentRoster.clear();
   agentRosterRaw.clear();
@@ -20496,6 +20499,7 @@ async function runOnceCore(o) {
   // THIS SAME runOnce per worker; the roster supplies each worker's composed identity (system prompt + model).
   makeOrchestrationTools({
     runOnce, roster: () => agentRoster, key: runKey, model, provider: providerId, baseUrl, reasoningEffort, subagents,
+    teams: loadTeams, teamScope: Array.isArray(o.teamScope) ? o.teamScope : undefined,   // a team manager's run: its roster is cut to its members
     finalizeDispatchDelivery: (id, envelope) => dispatchDeliveryStore.finalizeDispatchDelivery(dispatchDeliveryDeps, id, envelope),
     runRecord: (id) => runStore.latest(id),   // team.subagents {runId}: verify a foreground dispatch against run history (#57)
     // the dispatcher classifies a worker's brief with the SAME file probe that worker's own run uses (one brief, one answer)
@@ -20923,7 +20927,7 @@ async function runOnceCore(o) {
   // worker and one job at a time (team.dispatch builder:true), and the lead already holds it inside the orchestrator.
   if (unrestrictedHostNow()) {
     for (const objectType of Object.keys(CAP_REGISTRY)) {
-      if (objectType !== 'builder' && (objectType !== 'orchestrator' || o.lead || ownerTrusted)) station = stationWithObject(station, agentId, objectType);
+      if (objectType !== 'builder' && objectType !== 'teamlead' && (objectType !== 'orchestrator' || o.lead || ownerTrusted)) station = stationWithObject(station, agentId, objectType);
     }
     station = stationWithConnectors(station, agentId, connectors.ids());
   }
@@ -22294,8 +22298,10 @@ async function runOnceCore(o) {
       + 'until then (tool_search "delegate subtasks" finds it); a background team.spawn makes its worker controls callable.'
       + seatLine + projectWorkspaceNote + spawnLine + crewConfigLine + sessionsNote;
   } else if (isTask && resolved.tools.includes('team.dispatch')) {
-    teamNote = '\n\n[ORCHESTRATION] You are the lead orchestrator. You can build and direct a crew for the Commander:';
-    if (require('./overseer.js').isCoordinatorRun({ ...o, agentId, surface })) teamNote += '\nCoordinate the Commander\'s existing station crew from this conversation. Handle simple work directly. '
+    teamNote = Array.isArray(o.teamScope)
+      ? '\n\n[ORCHESTRATION] You manage a team for the lead. You can direct your team members:'
+      : '\n\n[ORCHESTRATION] You are the lead orchestrator. You can build and direct a crew for the Commander:';
+    if (require('./overseer.js').isCoordinatorRun({ ...o, agentId, surface })) teamNote +='\nCoordinate the Commander\'s existing station crew from this conversation. Handle simple work directly. '
       + 'Use the agents the Commander has already created, choosing by their roles and instructions. '
       + 'Do not create a replacement crew or require a special General session. '
       // ONE filing rule everywhere (2026-10-09): every dispatched worker gets its own thread filed under THIS
@@ -22311,11 +22317,16 @@ async function runOnceCore(o) {
     // coarse — see frontend/app/xp.js credential()). It INFORMS the pick, it never gates it: an agent that has
     // proved nothing simply has no track clause, exactly as before, and nothing here forbids delegating to it.
     let anyTrack = false;
+    // TEAMS: a manager's run lists only its own members; the lead's list marks each team manager, so a whole project goes to one
+    const teamList = Array.isArray(o.teamScope) ? [] : loadTeams();
     for (const [aid, ident] of agentRoster) {
       if (aid === agentId) continue;
+      if (Array.isArray(o.teamScope) && !o.teamScope.includes(aid)) continue;
       const track = String((ident && ident.track) || '').trim();
       if (track) anyTrack = true;
-      lines.push('  - ' + aid + ' (' + (ident.name || aid) + ')' + (ident.role ? ' — ' + ident.role : '') + (track ? ' [' + track + ']' : ''));
+      const managed = teamList.find(t => t.managerId === aid);
+      lines.push('  - ' + aid + ' (' + (ident.name || aid) + ')' + (ident.role ? ' — ' + ident.role : '') + (track ? ' [' + track + ']' : '')
+        + (managed ? ' [MANAGER of the ' + managed.name + ' team: hand it a whole project and it assigns its members, checks their work and reports back to you]' : ''));
     }
     if (lines.length) teamNote += '\n• YOUR TEAM — DELEGATE to your existing specialist crew with team.dispatch (workers:[{agentId, prompt}]) '
       + 'and synthesize their results into your final answer. '
