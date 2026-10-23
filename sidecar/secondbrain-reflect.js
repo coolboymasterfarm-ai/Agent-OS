@@ -1,6 +1,6 @@
 /* sidecar/secondbrain-reflect.js — the brain IMPROVES ITSELF, across agents.
 
-   StarNet already had a real learning loop for ONE agent: reflect.js proposes beliefs, the Commander answers
+   Agent OS already had a real learning loop for ONE agent: reflect.js proposes beliefs, the Commander answers
    Keep / Edit / Discard, `memory.feedback` moves trust, trust decays when it goes unreinforced, and an explicit
    Discard lands in `declined:<agent>` so it is never proposed again. That is the Hermes-shaped loop, and it
    works — inside a single notebook.
