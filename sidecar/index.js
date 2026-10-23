@@ -20942,8 +20942,9 @@ async function runOnceCore(o) {
   // to accept every user task (including delegation). The BUILDER is never swept in: it is the lead's to lend, one
   // worker and one job at a time (team.dispatch builder:true), and the lead already holds it inside the orchestrator.
   if (unrestrictedHostNow()) {
+    const LENT = ['builder', 'teamlead'];   // slices the lead lends one worker for one job: never swept in
     for (const objectType of Object.keys(CAP_REGISTRY)) {
-      if (objectType !== 'builder' && objectType !== 'teamlead' && (objectType !== 'orchestrator' || o.lead || ownerTrusted)) station = stationWithObject(station, agentId, objectType);
+      if (!LENT.includes(objectType) && (objectType !== 'orchestrator' || o.lead || ownerTrusted)) station = stationWithObject(station, agentId, objectType);
     }
     station = stationWithConnectors(station, agentId, connectors.ids());
   }

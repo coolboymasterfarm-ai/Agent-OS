@@ -127,7 +127,7 @@
     };
 
     paint();
-    fetch('/api/teams').then(r => r.json()).then(j => { teams = Array.isArray(j.teams) ? j.teams : []; })
+    fetch('/api/teams').then(r => { if (!r.ok) throw new Error('teams unavailable'); return r.json(); }).then(j => { teams = Array.isArray(j.teams) ? j.teams : []; })
       .catch(() => { msg = 'could not load teams'; })
       .finally(() => { loading = false; if (!editing) paint(); });
   }
