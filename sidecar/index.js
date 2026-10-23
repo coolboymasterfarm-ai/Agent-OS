@@ -27833,7 +27833,7 @@ function readBrainStores() {
   }
   const roster = ids.map(id => {
     const a = agentRoster.get(id);
-    return { agentId: id, name: (a && a.name) || id, color: (a && a.color) || null };
+    return { agentId: id, name: (a && a.name) || id, color: (a && a.color) || null, role: (a && a.role) || '' };
   });
   return { ids: ids, notebooks: notebooks, embeddings: embeddings, records: records, roster: roster };
 }

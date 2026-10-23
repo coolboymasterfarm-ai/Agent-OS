@@ -146,10 +146,12 @@
 
     const nameFor = {};
     const colorFor = {};
+    const roleFor = {};
     for (const a of roster) {
       if (!a || !a.agentId) continue;
       nameFor[a.agentId] = String(a.name || a.agentId);
       colorFor[a.agentId] = a.color || null;
+      roleFor[a.agentId] = a.role ? String(a.role).slice(0, 120) : '';
     }
 
     // ---- agents: every roster member, plus every notebook that exists even if the roster forgot it (an agent
@@ -187,7 +189,7 @@
       if (count || notebookExists(notebooks, agentId)) {
         nodes.unshift({
           id: agentNodeId, type: 'agent', agentId: agentId,
-          label: nameFor[agentId] || agentId, color: colorFor[agentId] || null,
+          label: nameFor[agentId] || agentId, color: colorFor[agentId] || null, role: roleFor[agentId] || '',
           memories: count
         });
       }
