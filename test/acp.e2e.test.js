@@ -340,7 +340,7 @@ function makeAcpClient(port, onPermission) {
       A.eq(r.result.stopReason, 'cancelled', 'a user cancel reports stopReason CANCELLED, not a generic end_turn');
       const said = client.textFor(sessionId);
       A.ok(!/could not complete this turn/.test(said), 'a deliberate cancel is NOT reported as a transport failure: ' + JSON.stringify(said).slice(0, 200));
-      A.ok(!/the run failed inside StarNet/.test(said), 'and does NOT tell the user to go check the station log');
+      A.ok(!/the run failed inside Agent OS/.test(said), 'and does NOT tell the user to go check the station log');
       mock.release();   // drop the parked completion so the next phase starts from a clean inflight count
     }
 

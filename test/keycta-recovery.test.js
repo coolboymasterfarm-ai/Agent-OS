@@ -40,10 +40,10 @@ assert.equal(cta.gapOf(), null);
 assert.equal(banner.hidden, true);
 assert.equal(lines[1].removed, true);
 assert.equal(rows[1].removed, true);
-// Link loss must offer linking, not a nonexistent StarNet API key or a false ready claim.
+// Link loss must offer linking, not a nonexistent Agent OS API key or a false ready claim.
 linked = false; model = ''; cta.refresh();
 assert.equal(cta.gapOf().kind, 'unlinked');
-assert.match(rows[2].items[0].label, /LINK STARNET/);
+assert.match(rows[2].items[0].label, /LINK AGENT OS/);
 // Retire stale statements even while another conversation is streaming; defer new chat prompts.
 busy = true; linked = true; cta.refresh();
 assert.equal(lines[2].removed, true);

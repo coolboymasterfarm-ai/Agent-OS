@@ -143,11 +143,11 @@ A.ok(EC.normalizeInput({ key: KEY, baseUrl: 'https://proxy.example/v1' }).ok, 'a
 /* ---------- credentialError: ONE sentence, real ways out ---------- */
 {
   const key = EC.credentialError({ id: 'openrouter', label: 'OpenRouter', kind: 'key', env: 'OPENROUTER_API_KEY', what: 'this scheduled routine' });
-  A.eq(key, 'no OpenRouter API key is saved on this station for this scheduled routine — connect or re-save it under SETTINGS → AI & MODELS, or set OPENROUTER_API_KEY in the environment that starts StarNet', 'the key sentence');
+  A.eq(key, 'no OpenRouter API key is saved on this station for this scheduled routine — connect or re-save it under SETTINGS → AI & MODELS, or set OPENROUTER_API_KEY in the environment that starts Agent OS', 'the key sentence');
   A.ok(!/connect an? .+? api key\b/i.test(key), 'not the interactive "connect a X API key" shape the chat error ladder maps to "no key connected yet"');
   A.ok(/base URL/.test(EC.credentialError({ label: 'Custom', kind: 'baseUrl', baseUrlEnv: 'CUSTOM_OPENAI_BASE_URL' })) && /CUSTOM_OPENAI_BASE_URL/.test(EC.credentialError({ label: 'Custom', kind: 'baseUrl', baseUrlEnv: 'CUSTOM_OPENAI_BASE_URL' })), 'an endpoint provider names its base URL and env var');
   A.ok(/ChatGPT is not signed in/.test(EC.credentialError({ kind: 'codex' })), 'ChatGPT names the sign-in');
-  A.ok(/not linked to a StarNet account/.test(EC.credentialError({ kind: 'starnet' })), 'managed credits name the link');
+  A.ok(/not linked to an Agent OS account/.test(EC.credentialError({ kind: 'starnet' })), 'managed credits name the link');
   for (const kind of ['key', 'baseUrl', 'codex', 'oauth', 'starnet', 'other']) A.ok(EC.credentialError({ label: 'X', kind }).indexOf('SETTINGS → AI & MODELS') >= 0, kind + ' names the real settings page');
 }
 

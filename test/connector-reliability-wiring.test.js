@@ -43,13 +43,13 @@ A.ok(/migrateConnectorCatalogKeyHeaders/.test(host) && /headers\[catalogEntry\.k
   const busy = next({ reason: 'busy', canStartFresh: true });
   A.eq(busy, '', 'a busy file leaves restart-then-START-FRESH to the sidecar message instead of saying it twice');
   // ...and the sidecar's busy message is the one place that says it (connector-vault.js lockMessage)
-  A.ok(/Restart StarNet to try again\.[\s\S]{0,40}If it is still locked after a restart, START FRESH/.test(read('sidecar/connector-vault.js')), 'the busy lock message names the restart before START FRESH');
+  A.ok(/Restart Agent OS to try again\.[\s\S]{0,40}If it is still locked after a restart, START FRESH/.test(read('sidecar/connector-vault.js')), 'the busy lock message names the restart before START FRESH');
   const unreachable = next({ reason: 'key-unavailable', canStartFresh: true });
   A.ok(!/unreadable files aside/.test(unreachable), 'an unreachable OS store is never steered to START FRESH as unreadable: ' + unreachable);
   A.ok(/START FRESH only if you cannot unlock/.test(unreachable), 'it puts unlocking the credential store before START FRESH: ' + unreachable);
-  A.eq(next({ reason: 'busy', canStartFresh: false }), ' Restart StarNet to try again.', 'a busy lock with no START FRESH says restart');
+  A.eq(next({ reason: 'busy', canStartFresh: false }), ' Restart Agent OS to try again.', 'a busy lock with no START FRESH says restart');
   A.ok(/START FRESH sets the unreadable files aside/.test(next({ reason: 'key-mismatch', canStartFresh: true })), 'a wrong-key store keeps the START FRESH line');
-  A.eq(next({ reason: 'key-unavailable', canStartFresh: false }), ' Unlock the credential store and restart StarNet.', 'the unlock advice is for an unreachable OS store');
+  A.eq(next({ reason: 'key-unavailable', canStartFresh: false }), ' Unlock the credential store and restart Agent OS.', 'the unlock advice is for an unreachable OS store');
   A.eq(next({ reason: 'unreadable', canStartFresh: false }), '', 'any other lock with no START FRESH leaves the sidecar message to speak');
   A.ok(/storageNextStep\(storage\)/.test(A.fnBody(connectors, 'async function refresh(')), 'the panel uses it');
 }

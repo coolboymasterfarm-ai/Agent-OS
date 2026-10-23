@@ -110,7 +110,7 @@ test('an action aimed at StarNet\'s own pid is refused before CUA starts; reads 
   const calls = [];
   const tools = makeCuaComputerTools({ allowPhysicalInput: true, binary: 'fixture', selfPids: [3184], connect: async () => ({
     call: async (name, args) => { calls.push(name); return { structuredContent: { effect: 'dispatched' } }; }, close: async () => {} }) });
-  await assert.rejects(tools.useTool.run({ action: 'click', parameters: { pid: 3184, window_id: 1, element_token: 't' } }, FULL), /StarNet itself.*station builder/);
+  await assert.rejects(tools.useTool.run({ action: 'click', parameters: { pid: 3184, window_id: 1, element_token: 't' } }, FULL), /Agent OS itself.*station builder/);
   assert.deepEqual(calls, []);
   await tools.useTool.run({ action: 'get_window_state', parameters: { pid: 3184, window_id: 1 } }, FULL);
   await tools.useTool.run({ action: 'click', parameters: { pid: 55, window_id: 1, element_token: 't' } }, FULL);

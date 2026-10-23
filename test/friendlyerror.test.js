@@ -547,7 +547,7 @@ const wrongServerCase = (async () => {
   const remoteRaw = 'The model server at ollama.lan ran out of memory. Free memory on that machine, or choose a smaller model from the model picker in COMMS before trying again. [http 500 - failed to allocate CUDA0 buffer]';
   const remote = friendlyError(Object.assign(new Error(remoteRaw), { status: 500, localModelMemory: true }));
   A.eq(remote.kind, 'local_model_memory', 'a remote allocation failure has the memory kind');
-  A.ok(/^The model server at ollama\.lan ran out of memory\./.test(remote.userMessage) && !/Close other local models|restart StarNet/.test(remote.userMessage), 'and says which machine, never local advice: ' + remote.userMessage);
+  A.ok(/^The model server at ollama\.lan ran out of memory\./.test(remote.userMessage) && !/Close other local models|restart Agent OS/.test(remote.userMessage), 'and says which machine, never local advice: ' + remote.userMessage);
   A.eq(require('../frontend/app/friendlyerror.js')._internals.kindFromRaw(remoteRaw, 500), 'local_model_memory', 'the browser fallback reads the remote prefix too');
   A.eq(require('../frontend/app/friendlyerror.js')._internals.kindFromRaw(raw, 500), 'local_model_memory',
     'browser fallback does not mistake the runtime termination for a network loss or generic 500');

@@ -180,7 +180,7 @@ const refused = r => /^REFUSED: /.test(r.content);
     }
     A.eq(s.pages.map(p => p.args.place), Array(6).fill('settings-spending'), 'the page is asked for the catalog id every time');
     const bad = await t.run({ target: 'the spending page' }, ctx);
-    A.ok(/^REFUSED: there is no StarNet place "the spending page" — call it as \{place: "<id>"\}/.test(bad.content), 'free text never opens anything, and the refusal says how to call it');
+    A.ok(/^REFUSED: there is no Agent OS place "the spending page" — call it as \{place: "<id>"\}/.test(bad.content), 'free text never opens anything, and the refusal says how to call it');
     const none = await t.run({}, ctx);
     A.ok(/^REFUSED: no place was named/.test(none.content), 'no place named is refused');
     A.eq(s.pages.length, 6, 'refusals never reach the page');

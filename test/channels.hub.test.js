@@ -930,7 +930,7 @@ async function run() {
     A.ok(/2,000,000-token per-run ceiling/.test(subscription) && /Runtime limits/.test(subscription), 'the subscription TOKEN ceiling names its real lever: ' + subscription);
     A.ok(!/\)\.\)/.test(subscription) && /STARNET_MAX_SUBSCRIPTION_TOKENS\.\)$/.test(subscription), 'the subscription note ends cleanly, never "…).)": ' + subscription);
     const cancelled = await endWith({ reason: 'cancelled' }, { token: 'partial' });
-    A.ok(/stopped from the StarNet app/.test(cancelled), 'a station-side cancel says who stopped it: ' + cancelled);
+    A.ok(/stopped from the Agent OS app/.test(cancelled), 'a station-side cancel says who stopped it: ' + cancelled);
     const stuck = await endWith({ reason: 'error' }, { error: 'loop guard: fs_read failed 3 times with identical arguments — stopping a stuck loop' });
     A.ok(/got stuck repeating one step: fs_read failed 3 times/.test(stuck), 'a loop-guard stop leads with what happened in plain words: ' + stuck);
   }

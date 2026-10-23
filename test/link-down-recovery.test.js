@@ -76,7 +76,7 @@ const textReply = (status, text) => async () => ({ ok: status === 200, status, t
     await new Promise(r => setTimeout(r, 0));
     release(true);
     A.eq([await a, calls], [true, 1], 'exactly one starnet_restart_sidecar per click burst');
-    const failing = liftHarness(textReply(200, 'ok'), { __TAURI__: { core: { invoke: async () => { throw new Error('StarNet is shutting down'); } } } });
+    const failing = liftHarness(textReply(200, 'ok'), { __TAURI__: { core: { invoke: async () => { throw new Error('Agent OS is shutting down'); } } } });
     A.eq(await failing.restartEngine(), false, 'a refused restart is false, never a thrown page error');
   }
 
@@ -149,7 +149,7 @@ const textReply = (status, text) => async () => ({ ok: status === 200, status, t
     const r = mountTopbar({ desktop: true, engine: { state: 'down', reason: '' }, restartOk: false });
     r.T._paintSig(); r.advance(16000); r.T._paintSig(); await r.settle(); await r.settle();
     r.listeners.click[0](); await r.settle(); await r.settle();
-    A.ok(r.notes.some(n => /could not be restarted — quit StarNet fully/.test(n[0])), 'a failed restart names the last-resort step');
+    A.ok(r.notes.some(n => /could not be restarted — quit Agent OS fully/.test(n[0])), 'a failed restart names the last-resort step');
   }
   {
     // the service answers 200: the engine is fine, restarting it would kill live work — no door, a truthful tip

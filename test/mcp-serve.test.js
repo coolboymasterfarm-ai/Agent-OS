@@ -1,4 +1,4 @@
-/* node test/mcp-serve.test.js — real proof for the StarNet MCP messaging-bridge server.
+/* node test/mcp-serve.test.js — real proof for the Agent OS MCP messaging-bridge server.
 
    Boots the actual sidecar (DEV mode on, temp workspace, mock OpenRouter) on an ephemeral port,
    then spawns sidecar/mcp/serve.js as a child and speaks REAL newline-delimited JSON-RPC 2.0 over
@@ -206,9 +206,9 @@ function parseToolResult(result) {
     A.eq((stillList.tools || []).length, 10, 'tools/list still works with the sidecar down (server is independent)');
     r = parseToolResult(await rpc.request('tools/call', { name: 'conversations_list', arguments: {} }));
     A.ok(r.isError === true, 'a data tool marks isError when the sidecar is unreachable');
-    A.ok(r.data.sidecarReachable === false && /StarNet/i.test(r.data.error), 'the error tells the operator to start StarNet');
+    A.ok(r.data.sidecarReachable === false && /Agent OS/i.test(r.data.error), 'the error tells the operator to start Agent OS');
 
-    // ⛔ STATION RESTART: THE SCRAPED TOKEN IS PER-LAUNCH AND GOES STALE. StarNet is a desktop app the
+    // ⛔ STATION RESTART: THE SCRAPED TOKEN IS PER-LAUNCH AND GOES STALE. Agent OS is a desktop app the
     // Commander closes and reopens; every launch mints a NEW api token. This bridge is spawned once by the MCP
     // client and lives for that whole session, so a token cached for the process lifetime meant the FIRST
     // restart killed every tool with "returned HTTP 401" (and left the SSE feed re-presenting the dead token

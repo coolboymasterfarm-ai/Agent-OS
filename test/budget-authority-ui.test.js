@@ -57,7 +57,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   const {node,posts}=harness(st,(u)=>u==='/api/budget/settle'?settledReply:st);await tick();
   const line=node('#budget-spend').textContent;
   assert.match(line,/unavailable/);assert.match(line,/2 interrupted runs/);assert.match(line,/At least \$1\.2 today/);
-  assert.doesNotMatch(line,/Restore the ledger|Restart StarNet|\$0(?!\.)/,'never the old advice, never a guessed $0');
+  assert.doesNotMatch(line,/Restore the ledger|Restart Agent OS|\$0(?!\.)/,'never the old advice, never a guessed $0');
   const rows=node('#budget-unsettled').children;assert.equal(rows.length,2,'one row per interrupted run');
   const [r1,r2]=rows;
   assert.equal(r1.className,'set-row bg-unsettled');assert.match(r1.textContent,/INTERRUPTED — Fix the build/);assert.match(r1.attrs['data-tip'],/openrouter · test\/m/);
@@ -79,7 +79,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   // /api/budget/status, so the stale row vanishes and the spend line says the write-error truth
   let server=st;
   const failed={...base,unsettled:[st.unsettled[1]],atLeast:null,accounting:{complete:true,durable:false,readError:null,writeError:'settle_write_failed'}};
-  const h3=harness(()=>server,(u)=>{if(u==='/api/budget/settle'){server=failed;return {error:'the settlement could not be saved to disk — restart StarNet to recover it',code:'spend_history_unavailable'};}return st;},u=>u!=='/api/budget/settle');
+  const h3=harness(()=>server,(u)=>{if(u==='/api/budget/settle'){server=failed;return {error:'the settlement could not be saved to disk — restart Agent OS to recover it',code:'spend_history_unavailable'};}return st;},u=>u!=='/api/budget/settle');
   await tick();assert.equal(h3.gets.length,1);
   const [, , , count3]=h3.node('#budget-unsettled').children[0].children;
   count3.click();await tick();await tick();
@@ -87,7 +87,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   assert.equal(h3.gets.length,2,'a failed settle re-reads /api/budget/status');
   assert.match(h3.node('#budget-msg').textContent,/could not be saved/,'the server reason stays on screen');
   assert.equal(h3.node('#budget-unsettled').children.length,1,'the dropped run is no longer offered for a second booking');
-  assert.match(h3.node('#budget-spend').textContent,/Restart StarNet/,'the spend line shows the write-error copy');
+  assert.match(h3.node('#budget-spend').textContent,/Restart Agent OS/,'the spend line shows the write-error copy');
   // a 404 (settled elsewhere / gone) repaints the same way
   server=st;
   const h4=harness(()=>server,(u)=>{if(u==='/api/budget/settle'){server=settledReply;return {error:'that run has no unsettled spend',code:'not_unsettled'};}return st;},u=>u!=='/api/budget/settle');
@@ -95,7 +95,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   h4.node('#budget-unsettled').children[0].children[3].click();await tick();await tick();
   assert.equal(h4.gets.length,2);assert.equal(h4.node('#budget-unsettled').children.length,0);assert.match(h4.node('#budget-msg').textContent,/no unsettled spend/);
  }
- for(const [acc,re,not] of [[{complete:true,durable:false,writeError:'ENOSPC'},/Restart StarNet/,/Settle/],[{complete:false,durable:true,readError:'SPEND_RECEIPT_CONFLICT'},/could not be read/,/Settle/]]){
+ for(const [acc,re,not] of [[{complete:true,durable:false,writeError:'ENOSPC'},/Restart Agent OS/,/Settle/],[{complete:false,durable:true,readError:'SPEND_RECEIPT_CONFLICT'},/could not be read/,/Settle/]]){
   const {node}=harness({caps:{perRun:0,perAgent:0,perDay:25,global:0},saved:{},envDefaults:{perRun:0,perAgent:0,perDay:25,global:0},spentToday:null,accounting:acc,unsettled:[]});await tick();
   assert.match(node('#budget-spend').textContent,/unavailable/);assert.match(node('#budget-spend').textContent,re);assert.doesNotMatch(node('#budget-spend').textContent,not);
   assert.equal(node('#budget-unsettled').children.length,0);

@@ -199,7 +199,7 @@ function launch(store, opts) {
     A.eq(s.badge.style.display, 'none', 'the NEW chip goes out after SKIP VERSION');
     A.ok(!/id="up-ignore"|id="up-install"/.test(body.innerHTML), 'the INSTALL / SKIP card does not come back at once');
     A.ok(/v0\.13\.3 is skipped/.test(body.innerHTML), 'the window says which version is skipped');
-    A.ok(!/You have the latest StarNet/.test(body.innerHTML), 'a skipped update is never shown as "latest"');
+    A.ok(!/You have the latest Agent OS/.test(body.innerHTML), 'a skipped update is never shown as "latest"');
     A.ok(/UPDATE SKIPPED/.test(body.innerHTML), 'the status label says skipped, not up to date');
 
     clock.t += 20 * 60 * 1000;                       // a later open still may look for something newer...
