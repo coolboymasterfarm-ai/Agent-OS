@@ -37,6 +37,16 @@ function walk(dir) {
   }
 }
 for (const d of ['frontend', 'sidecar', 'shared']) walk(path.join(root, d));
+// Rust shell: user-visible string literals (dialogs, tray, window title, errors) say Agent OS. Comments are not scanned;
+// the on-disk folder joins stay StarNet on purpose.
+const RUST_KEEP = [/\.join\("StarNet"\)/, /"StarNet"\)\.join|\[\s*"StarNet"/, /`StarNet`/];
+const rustDir = path.join(root, 'src-tauri', 'src');
+if (fs.existsSync(rustDir)) for (const f of fs.readdirSync(rustDir).filter((x) => x.endsWith('.rs'))) {
+  fs.readFileSync(path.join(rustDir, f), 'utf8').split(/\r?\n/).forEach((line, i) => {
+    const code = line.replace(/\/\/.*$/, (m, off) => (line.slice(0, off).split('"').length % 2 === 1 ? '' : m));
+    if (/"[^"]*\bStarNet\b[^"]*"/.test(code) && WORD.test(code) && !RUST_KEEP.some((re) => re.test(code))) bad.push('src-tauri/src/' + f + ':' + (i + 1) + '  ' + line.trim().slice(0, 120));
+  });
+}
 ok(bad.length === 0, 'old-name display copy found (say Agent OS, or add a reasoned KEEP entry):\n  ' + bad.join('\n  '));
 
 // ---- identifiers that must survive the rename ----

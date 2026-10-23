@@ -139,7 +139,7 @@ FunctionEnd
   IfFileExists "$R9" +2 0
     StrCpy $R9 "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
 
-  DetailPrint "Stopping any StarNet processes running from $INSTDIR..."
+  DetailPrint "Stopping any Agent OS processes running from $INSTDIR..."
 
   ; 1. The shell first — it owns the guardian that would respawn the sidecar.
   nsExec::ExecToLog '"$R9" -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-Process -Name skynet-desktop -ErrorAction SilentlyContinue | Where-Object Path -eq $\'$INSTDIR\skynet-desktop.exe$\' | Stop-Process -Force -ErrorAction SilentlyContinue"'

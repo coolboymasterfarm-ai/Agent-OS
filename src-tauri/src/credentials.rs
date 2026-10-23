@@ -543,7 +543,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Requires an unlocked native OS credential store; creates the persistent StarNet connector key if absent"]
+    #[ignore = "Requires an unlocked native OS credential store; creates the persistent Agent OS connector key if absent"]
     fn connector_keychain_roundtrip() {
         let first = connector_encryption_key().expect("native connector key available");
         let second = connector_encryption_key().expect("native connector key readable again");
