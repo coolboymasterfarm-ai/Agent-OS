@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy — StarNet</title>
+<title>Privacy — Agent OS</title>
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../docs/docs.css?v=20260913-brand-nav">
 </head>
@@ -13,7 +13,7 @@
 <div class="crt-vignette" aria-hidden="true"></div>
 
 <header class="topbar" id="topbar">
-  <a class="brand" href="../index.html" aria-label="StarNet home"><img src="../assets/starnet-logo-small.png" alt="StarNet" width="355" height="60"></a>
+  <a class="brand" href="../index.html" aria-label="Agent OS home"><img src="../assets/starnet-logo-small.png" alt="Agent OS" width="355" height="60"></a>
   <nav class="topnav" aria-label="Site">
     <a href="../index.html#station">Product</a>
     <a href="../docs/index.html">Docs</a>
@@ -29,11 +29,11 @@
 
 <div class="docs-shell" style="grid-template-columns:1fr; max-width:860px;">
   <main class="docs-main">
-<h1>StarNet Privacy</h1>
+<h1>Agent OS Privacy</h1>
 <p><em>Last reviewed: 2026-07-25, against the shipping code.</em></p>
-<p>StarNet is a <strong>local-first desktop app</strong>. It runs a small server (the "sidecar") on your own
-machine (<code>localhost</code>) and does the agent work there. There is <strong>no StarNet cloud, no StarNet
-account, and no StarNet server that receives your data.</strong> This document is written in plain
+<p>Agent OS is a <strong>local-first desktop app</strong>. It runs a small server (the "sidecar") on your own
+machine (<code>localhost</code>) and does the agent work there. There is <strong>no Agent OS cloud, no Agent OS
+account, and no Agent OS server that receives your data.</strong> This document is written in plain
 English and is grounded in an audit of the actual code — not aspirations.</p>
 <p>Support questions: androo.agi@gmail.com.</p>
 <h2>The short version</h2>
@@ -48,18 +48,18 @@ English and is grounded in an audit of the actual code — not aspirations.</p>
   <code>~/Library/Application Support/ai.skynet.harness/workspaces/</code>; Linux:
   <code>~/.local/share/ai.skynet.harness/workspaces/</code>. (The developer-mode sidecar uses
   <code>%LOCALAPPDATA%\StarNet\</code> on Windows.) The <code>ai.skynet.harness</code> folder name is an intentional
-  back-compatibility alias kept from before the app was renamed to StarNet on 2026-06-22 — it
-  holds your StarNet data.</li>
+  back-compatibility alias kept from before the app was renamed to StarNet on 2026-06-22 (it is now called Agent OS) — it
+  holds your Agent OS data.</li>
 <li>The app talks to the network for the configured or requested work described below, plus the
   desktop app's automatic update-manifest check. These are the only outbound cases.</li>
 </ul>
 <h2>What leaves your machine — and only these</h2>
-<p>StarNet makes outbound network requests in exactly these situations. Nothing else.</p>
+<p>Agent OS makes outbound network requests in exactly these situations. Nothing else.</p>
 <h3>1. Your chosen AI model provider (using your key)</h3>
-<p>When an agent runs, StarNet calls the model provider <strong>you</strong> configured, authenticated with
+<p>When an agent runs, Agent OS calls the model provider <strong>you</strong> configured, authenticated with
 <strong>your</strong> API key (or your ChatGPT sign-in). Your prompts, conversation, and any content the
 agent works with are sent to that provider so it can generate a response — the same as any app
-that uses that provider. StarNet is a pass-through here; it does not sit in the middle.</p>
+that uses that provider. Agent OS is a pass-through here; it does not sit in the middle.</p>
 <p>Depending on what you set up, that provider is one of:</p>
 <ul>
 <li>OpenRouter (<code>openrouter.ai</code>)</li>
@@ -70,29 +70,29 @@ that uses that provider. StarNet is a pass-through here; it does not sit in the 
 <li>or another OpenAI-compatible provider you point it at (xAI, Groq, Mistral, DeepSeek,
   Together, Fireworks, Perplexity, Cerebras).</li>
 </ul>
-<p><strong>Your key, your data, your account.</strong> StarNet never sees a StarNet-owned copy — the key is
+<p><strong>Your key, your data, your account.</strong> Agent OS never sees an Agent OS-owned copy — the key is
 yours and the request goes straight to the provider you picked.</p>
 <h3>2. Chat channels — only if you connect them</h3>
-<p>If you connect a chat channel, StarNet talks to that platform to send and receive messages on the
+<p>If you connect a chat channel, Agent OS talks to that platform to send and receive messages on the
 channel you set up, authenticated with the token (or endpoint) <strong>you</strong> provide. Nothing is
 contacted unless you connect it:</p>
 <ul>
-<li><strong>Discord / Telegram</strong> — StarNet calls that platform's API (<code>discord.com</code>, <code>api.telegram.org</code>)
+<li><strong>Discord / Telegram</strong> — Agent OS calls that platform's API (<code>discord.com</code>, <code>api.telegram.org</code>)
   with your bot token.</li>
-<li><strong>Slack</strong> — StarNet calls the Slack API (<code>slack.com</code>) with your bot token.</li>
-<li><strong>Matrix</strong> — StarNet talks to <strong>the homeserver you point it at</strong> — whatever URL you configure,
-  whether <code>matrix.org</code> or a server you run yourself — using your access token. StarNet does not
+<li><strong>Slack</strong> — Agent OS calls the Slack API (<code>slack.com</code>) with your bot token.</li>
+<li><strong>Matrix</strong> — Agent OS talks to <strong>the homeserver you point it at</strong> — whatever URL you configure,
+  whether <code>matrix.org</code> or a server you run yourself — using your access token. Agent OS does not
   pick a server; you do.</li>
-<li><strong>Signal</strong> — StarNet talks to <strong>the signal-cli REST endpoint you run</strong> (the URL you configure for
+<li><strong>Signal</strong> — Agent OS talks to <strong>the signal-cli REST endpoint you run</strong> (the URL you configure for
   your own signal-cli bridge), using the account you registered there.</li>
 </ul>
-<p>If you never connect a channel, StarNet never contacts any of these services.</p>
+<p>If you never connect a channel, Agent OS never contacts any of these services.</p>
 <h3>3. Spotify — only if you enable it</h3>
-<p>If you enable the Spotify integration and authorize it, StarNet calls the Spotify API
+<p>If you enable the Spotify integration and authorize it, Agent OS calls the Spotify API
 (<code>api.spotify.com</code>, <code>accounts.spotify.com</code>) to read what's playing and control playback, using
 the token you granted. If you don't enable Spotify, no Spotify requests are made.</p>
 <h3>4. Web search / web fetch — only when an agent uses that tool</h3>
-<p>If an agent uses its web tools, StarNet fetches results through independent, keyless services
+<p>If an agent uses its web tools, Agent OS fetches results through independent, keyless services
 — web search via Mojeek (<code>mojeek.com</code>, with DuckDuckGo as a fallback) and page reading via
 Jina Reader (<code>r.jina.ai</code>) — or, if you have an OpenRouter key, OpenRouter's web plugin. If the
 Jina reader is unavailable or rate-limits, the page is fetched <strong>directly from its own host</strong>
@@ -104,7 +104,7 @@ as an anti-abuse guard.)</p>
 <p><strong>Spoken agent lines</strong> use local Kokoro when the built-in voice engine is available. Other
 spoken lines use your configured model provider (OpenRouter, OpenAI, or Gemini), or ElevenLabs when
 you configure an ElevenLabs voice, so the line of text is sent to that service. If those paths are
-unavailable, StarNet can use Microsoft's keyless Edge Read Aloud service, which sends the line of text
+unavailable, Agent OS can use Microsoft's keyless Edge Read Aloud service, which sends the line of text
 to Microsoft. Voices off means no TTS requests at all.</p>
 <p><strong>Hands-free Live Voice does not use a vendor realtime-voice session.</strong> Listening runs on local
 Whisper when installed; on Windows, offline System.Speech dictation can serve as the fallback. On those
@@ -131,8 +131,8 @@ skill's files from <code>https://starnetos.com/skills/</code>. These are plain <
 market is on this station, the app also re-reads the small list of skills the market has pulled
 (<code>https://starnetos.com/.well-known/starnet-skills-revoked.json</code>) shortly after it starts and every few minutes,
 so a skill found to be unsafe is switched off; with no market skills installed, nothing is fetched in the
-background. Every catalog and pulled list is checked against StarNet's signature before it is used.</p>
-<h2>What StarNet stores on your machine (and how)</h2>
+background. Every catalog and pulled list is checked against Agent OS's signature before it is used.</p>
+<h2>What Agent OS stores on your machine (and how)</h2>
 <p>Everything below lives under your per-user app-data directory (see the paths in "The short
 version" above for Windows/macOS/Linux). It never leaves your machine except as described
 above. Where this document says "OS keychain," that means Windows Credential Manager, the
@@ -238,12 +238,12 @@ Windows user account can read it. Protect your machine account accordingly.</p>
 <ul>
 <li>We do <strong>not</strong> run analytics or telemetry of any kind.</li>
 <li>We do <strong>not</strong> collect crash reports.</li>
-<li>We do <strong>not</strong> have a StarNet account system or a StarNet backend that stores your data.</li>
+<li>We do <strong>not</strong> have an Agent OS account system or an Agent OS backend that stores your data.</li>
 <li>We do <strong>not</strong> sell, share, or transmit your conversations, keys, or files to anyone —
   the only outbound traffic is the specific, purpose-built requests listed above.</li>
 </ul>
 <h2>Deleting your data</h2>
-<p>Your data is just files. To wipe it, uninstall StarNet and delete the <code>ai.skynet.harness</code>
+<p>Your data is just files. To wipe it, uninstall Agent OS (the installer and your installed-apps list still show it as &quot;StarNet&quot;) and delete the <code>ai.skynet.harness</code>
 app-data folder for your OS — Windows: <code>%APPDATA%\ai.skynet.harness\</code>
 (<code>C:\Users\&lt;you&gt;\AppData\Roaming\ai.skynet.harness\</code>); macOS:
 <code>~/Library/Application Support/ai.skynet.harness/</code>; Linux: <code>~/.local/share/ai.skynet.harness/</code>.
@@ -268,7 +268,7 @@ seeded demo save; anything you do in it stays in your browser's local storage an
 </div>
 
 <footer class="footer">
-  <div class="footer-line">STARNET &middot; a living station of AI agents, doing real work in the dark</div>
+  <div class="footer-line">AGENT OS &middot; a living station of AI agents, doing real work in the dark</div>
   <div class="footer-links">
     <a href="../index.html">HOME</a>
     <a href="https://github.com/androoAGI/starnet" target="_blank" rel="noopener">GITHUB</a>
@@ -282,7 +282,7 @@ seeded demo save; anything you do in it stays in your browser's local storage an
     <a href="terms.html">TERMS</a>
     <a href="mailto:androo.agi@gmail.com">CONTACT</a>
   </div>
-  <div class="footer-fine">MIT license &middot; &copy; <span id="year">2026</span> StarNet &middot; no telemetry, no tracking &mdash; <a href="privacy.html">we collect nothing</a></div>
+  <div class="footer-fine">MIT license &middot; &copy; <span id="year">2026</span> Agent OS &middot; no telemetry, no tracking &mdash; <a href="privacy.html">we collect nothing</a></div>
 </footer>
 
 </body>
