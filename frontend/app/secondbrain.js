@@ -1609,6 +1609,84 @@ const SecondBrain = (() => {
   };
 })();
 
+
+/* LITE second brain: the whole view as a 128x80 pixel picture scaled up. No gradients, no glow, no 3D, ~4 frames a
+   second, one tiny canvas. Built for a PC with no GPU: same idea (a brain lit by each team's notebooks), far less work.
+   shortcut: a fixed 2D map and no click-to-inspect, add them back only if the PC can afford it. */
+function secondBrainLite(body, ready) {
+  const W = 128, H = 80, T = SecondBrain._anatomy.TEAMS, teamOf = SecondBrain._anatomy.teamOf;
+  body.innerHTML = '';
+  body.style.cssText += ';position:relative;display:flex;flex-direction:column;background:#04070f;color:#8fc8ff;font:12px monospace;overflow:hidden';
+  const head = document.createElement('div'); head.style.cssText = 'padding:8px 12px;flex:none'; head.textContent = 'SECOND BRAIN · reading notebooks…';
+  const stage = document.createElement('div'); stage.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;justify-content:center';
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  cv.style.cssText = 'height:100%;max-width:100%;aspect-ratio:8/5;image-rendering:pixelated;image-rendering:crisp-edges';
+  const legend = document.createElement('div'); legend.style.cssText = 'padding:6px 12px 22px;flex:none;display:flex;flex-wrap:wrap;gap:4px 12px';
+  stage.appendChild(cv); body.append(head, stage, legend);
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const base = document.createElement('canvas'); base.width = W; base.height = H;
+  const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return (h >>> 0) / 4294967296; };
+  const inBrain = (x, y) => { const a = (x - 64) / 54, b = (y - 36) / 33; const c = (x - 30) / 14, d = (y - 66) / 9; return a * a + b * b <= 1 || c * c + d * d <= 1; };
+  const inner = (x, y) => inBrain(x - 1, y) && inBrain(x + 1, y) && inBrain(x, y - 1) && inBrain(x, y + 1);
+  function paintBase(dots, links) {
+    const g = base.getContext('2d', { willReadFrequently: true });
+    g.fillStyle = '#04070f'; g.fillRect(0, 0, W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!inBrain(x, y)) continue;
+      g.fillStyle = inner(x, y) ? ((x + y) % 2 ? '#0b1530' : '#09112a') : '#3f6fb0'; g.fillRect(x, y, 1, 1);
+    }
+    g.fillStyle = '#16264a'; for (let y = 8; y < 62; y += 2) g.fillRect(64, y, 1, 1);   // the fissure
+    g.fillStyle = '#1b2f55';
+    for (const [a, b] of links) {   // one pixel per step along each link, no antialiasing
+      const n = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+      for (let i = 0; i <= n; i += 2) g.fillRect(Math.round(a.x + (b.x - a.x) * i / n), Math.round(a.y + (b.y - a.y) * i / n), 1, 1);
+    }
+  }
+  let dots = [], tick = 0, timer = 0;
+  function frame() {
+    if (!body.isConnected) { clearInterval(timer); return; }
+    if (body.offsetParent === null) return;   // hidden window: do nothing
+    tick++;
+    ctx.drawImage(base, 0, 0);
+    for (const d of dots) {
+      const lit = 0.55 + 0.45 * Math.sin(tick * 0.5 + d.ph);
+      ctx.globalAlpha = lit; ctx.fillStyle = d.c; ctx.fillRect(d.x - 1, d.y - 1, d.big ? 3 : 2, d.big ? 3 : 2);
+    }
+    ctx.globalAlpha = 1;
+    const sy = (tick * 2) % H; ctx.fillStyle = 'rgba(143,200,255,.12)'; ctx.fillRect(0, sy, W, 1);   // one scan line
+  }
+  async function load() {
+    try {
+      const api = typeof Harness !== 'undefined' && Harness.api;
+      const res = api ? await api.get('/api/secondbrain/graph') : await (await fetch('/api/secondbrain/graph')).json();
+      const nodes = (res && res.graph && res.graph.nodes) || [], edges = (res && res.graph && res.graph.edges) || [];
+      const byId = {}, counts = {};
+      for (const n of nodes.slice(0, 400)) {
+        if (n.type === 'concept') continue;
+        const team = n.type === 'knowledge' ? null : teamOf(n.agentId, n.label), tm = team ? T[team] : null;
+        const ax = tm ? tm.anchor[0] : -0.64, ay = tm ? tm.anchor[1] : -0.5, sp = tm ? Math.max(0.08, tm.spread) : 0.1;
+        const r = n.type === "agent" ? 0 : Math.max(0.14, sp) * 1.7 * (0.25 + hash(n.id + "r")), an = hash(n.id + 'a') * 6.283;
+        let x = Math.round(64 + (ax + Math.cos(an) * r) * 46), y = Math.round(36 - (ay + Math.sin(an) * r) * 40);
+        for (let k = 0; k < 8 && !inner(x, y); k++) { x = Math.round(64 + (x - 64) * 0.9); y = Math.round(36 + (y - 36) * 0.9); }
+        const c = tm ? tm.color : '#7c7bff';
+        byId[n.id] = { x, y, c, big: n.type === 'agent', ph: hash(n.id) * 6.283 };
+        const k = team || 'knowledge'; counts[k] = (counts[k] || 0) + 1;
+      }
+      dots = Object.values(byId);
+      const links = []; for (const e of edges) { if (links.length >= 200) break; const a = byId[e.source], b = byId[e.target]; if (a && b && (a.x !== b.x || a.y !== b.y)) links.push([a, b]); }
+      paintBase(dots, links);
+      head.textContent = 'SECOND BRAIN · ' + dots.length + ' points · ' + links.length + ' links';
+      legend.innerHTML = '';
+      for (const k of Object.keys(counts)) {
+        const chip = document.createElement('span'); chip.style.color = k === 'knowledge' ? '#7c7bff' : T[k].color;
+        chip.textContent = '■ ' + (k === 'knowledge' ? 'KNOWLEDGE' : T[k].label) + ' ' + counts[k]; legend.appendChild(chip);
+      }
+      frame(); if (!timer) timer = setInterval(frame, 250);
+    } catch (e) { head.textContent = 'SECOND BRAIN · could not read notebooks (' + String(e && e.message || e).slice(0, 120) + ')'; }
+  }
+  load();
+}
+
 /* The station-wide door. A per-agent brain lives in the dossier (MEMORY already answers "what does THIS agent
    know"); the second brain answers the other question — "what does the STATION know, and who learned it" — so it
    gets its own window in the CREW dock. It opens WIDE and tall: the brain is the content, not a widget in a pane. */
@@ -1624,8 +1702,8 @@ if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
       p.textContent = 'The second brain hit an error — ' + String((e && (e.stack || e.message)) || e).slice(0, 1200);
       body.style.position = 'relative'; body.appendChild(p);
     };
-    try { SecondBrain.mount(body); } catch (e) { show(e); }
-    { const t = document.createElement('div'); t.textContent = 'second brain · low-graphics v8'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
+    try { secondBrainLite(body); } catch (e) { show(e); }   // the full 3D view (SecondBrain.mount) stays in the file, unused here
+    { const t = document.createElement('div'); t.textContent = 'second brain · pixel v9'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
     // Anything the first frames throw (the draw loop runs outside mount) lands here too.
     const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
     window.addEventListener('error', onErr);
