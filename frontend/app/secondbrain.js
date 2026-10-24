@@ -179,7 +179,7 @@ const SecondBrain = (() => {
     if (SPRITES[color]) return SPRITES[color];
     const c = document.createElement('canvas');
     c.width = c.height = 64;
-    const g = c.getContext('2d');
+    const g = c.getContext('2d', { willReadFrequently: true });
     const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
     gr.addColorStop(0, 'rgba(255,255,255,1)');
     gr.addColorStop(0.14, rgba(color, 0.95));
@@ -355,7 +355,7 @@ const SecondBrain = (() => {
       loading: true, error: '', sampled: false, warm: 0, alive: true, raf: 0, t: 0, last: 0,
       w: 0, h: 0, dpr: 1, compact: false, panelsAuto: true, teamsPresent: {},
       cam: { yaw: Math.PI * 0.8, pitch: 0.2, zoom: 1, tx: 0, ty: -0.04, tz: 0 },
-      goal: null, autoRotate: false, lastInput: 0, drag: null, pointers: new Map()
+      goal: null, autoRotate: !reduced, lastInput: 0, drag: null, pointers: new Map()
     };
 
     // ---- DOM ----
@@ -365,7 +365,8 @@ const SecondBrain = (() => {
     wrap.setAttribute('aria-label', 'Second brain — every agent\'s memory as one brain. Drag to orbit, scroll to zoom.');
     const canvas = el('canvas', 'sb-canvas');
     canvas.setAttribute('aria-hidden', 'true');
-    const ctx = canvas.getContext('2d');
+    // CPU-backed on purpose: the GPU canvas path flashed then went blank in the Windows webview (same picture, no GPU raster).
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const bg = document.createElement('canvas');
 
     const top = el('div', 'sb-top');
@@ -641,7 +642,7 @@ const SecondBrain = (() => {
     function fit() {
       const r = wrap.getBoundingClientRect();
       const w = Math.max(320, Math.round(r.width)), h = Math.max(360, Math.round(r.height));
-      const dpr = 1;   // shortcut: 1x always, a busy PC could not keep up with 2x; raise when the redraw is cheap
+      const dpr = state.slow ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       if (w === state.w && h === state.h && dpr === state.dpr) return;
       state.w = w; state.h = h; state.dpr = dpr;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
@@ -656,7 +657,7 @@ const SecondBrain = (() => {
     function paintBackground() {
       const w = state.w, h = state.h, d = state.dpr;
       bg.width = Math.round(w * d); bg.height = Math.round(h * d);
-      const g = bg.getContext('2d');
+      const g = bg.getContext('2d', { willReadFrequently: true });
       g.setTransform(d, 0, 0, d, 0, 0);
       const base = g.createRadialGradient(w / 2, h * 0.46, 0, w / 2, h * 0.46, Math.max(w, h) * 0.75);
       base.addColorStop(0, '#0b1430'); base.addColorStop(0.45, '#050a1a'); base.addColorStop(1, '#010207');
@@ -1053,7 +1054,7 @@ const SecondBrain = (() => {
         draw(dt);
         const cost = performance.now() - t0;
         state.cost = state.cost ? state.cost * 0.7 + cost * 0.3 : cost;
-        state.gap = Math.max(100, Math.min(400, Math.round(state.cost * 4)));   // never above ~10fps
+        state.gap = Math.max(33, Math.min(250, Math.round(state.cost * 3)));   // ~30fps while cheap, backs off when slow
         if (state.cost > 40 && !state.slow) { state.slow = true; fit(); }
       }
       state.raf = requestAnimationFrame(loop);
