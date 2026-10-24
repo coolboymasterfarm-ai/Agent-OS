@@ -1667,9 +1667,18 @@ function secondBrainLite(body) {
     g.globalCompositeOperation = 'source-over';
   }
   let dots = [], tick = 0, timer = 0;
+  // The station scene behind this window (world.js, with its WebGL curve pass) was what ate the CPU on a PC with no
+  // graphics card: profiled at ~90% of a slowed CPU with the brain closed. While the brain is on screen the station only
+  // needs to tick, so drop it to 1 frame a second; give it back the moment the brain closes or is minimised.
+  let capped = false;
+  const capStation = on => {
+    if (on === capped) return; capped = on;
+    try { if (typeof World !== 'undefined' && World.setFrameCap) World.setFrameCap(on ? 1000 : 0); } catch (_) {}
+  };
   function frame() {
-    if (!body.isConnected) { clearInterval(timer); return; }
-    if (body.offsetParent === null) return;   // window hidden: skip the work
+    if (!body.isConnected) { clearInterval(timer); capStation(false); return; }
+    if (body.offsetParent === null) { capStation(false); return; }   // window hidden: skip the work, station back to normal
+    capStation(true);
     tick++;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
     ctx.globalCompositeOperation = 'lighter';
@@ -1714,9 +1723,10 @@ function secondBrainLite(body) {
         const chip = document.createElement('span'); chip.style.color = k === 'knowledge' ? '#7c7bff' : T[k].color;
         chip.textContent = '● ' + (k === 'knowledge' ? 'KNOWLEDGE' : T[k].label) + ' ' + counts[k]; legend.appendChild(chip);
       }
-      frame(); if (!timer) timer = setInterval(frame, 125);
+      frame();
     } catch (e) { head.textContent = 'SECOND BRAIN · could not read notebooks (' + String(e && e.message || e).slice(0, 120) + ')'; }
   }
+  timer = setInterval(frame, 125);
   load();
 }
 
@@ -1736,7 +1746,7 @@ if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
       body.style.position = 'relative'; body.appendChild(p);
     };
     try { secondBrainLite(body); } catch (e) { show(e); }   // the full 3D view (SecondBrain.mount) stays in the file, unused here
-    { const t = document.createElement('div'); t.textContent = 'second brain · smooth-lite v10'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
+    { const t = document.createElement('div'); t.textContent = 'second brain · smooth-lite v11'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
     // Anything the first frames throw (the draw loop runs outside mount) lands here too.
     const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
     window.addEventListener('error', onErr);
