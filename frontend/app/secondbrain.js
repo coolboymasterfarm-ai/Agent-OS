@@ -1614,7 +1614,8 @@ const SecondBrain = (() => {
    soft glow, the links) is painted ONCE into a 384x240 picture; each frame only stamps ~200 pre-made glowing dots on
    top, 8 times a second, then the browser stretches it smoothly to the window. No 3D, no per-frame gradients.
    shortcut: fixed 2D map, no click-to-inspect; the full 3D view (SecondBrain.mount) is still in this file. */
-function secondBrainLite(body) {
+function secondBrainLite(body, opts) {
+  opts = opts || {};
   if (body._sbLite) return;   // a rerender of the open window keeps the live view (and its one timer)
   body._sbLite = true;
   const S = 3, W = 128 * S, H = 80 * S, T = SecondBrain._anatomy.TEAMS, teamOf = SecondBrain._anatomy.teamOf;
@@ -1687,11 +1688,17 @@ function secondBrainLite(body) {
     try { document.body.classList.toggle('sb-lowfx', on); } catch (_) {}
     try { if (typeof World !== 'undefined' && World.setFrameCap) World.setFrameCap(on ? 1000 : 0); } catch (_) {}
   };
-  capStation(true);   // at once, before the first paint of this window
+  // AUTO: only a PC that needs it gets the low-fx mode — a software renderer (no usable GPU) at once, any other PC only
+  // when the page actually stutters (jankWatch). A PC that keeps up keeps its blur and its full-rate station.
+  let lowfx = !!opts.software;
+  const stopWatch = jankWatch(body, avg => { if (avg > 60) lowfx = true; });
+  let gap = opts.software ? 125 : 33, cost = 0;   // ~30 fps; 8 fps when the draw itself is costly
   function frame() {
-    if (!body.isConnected) { clearInterval(timer); capStation(false); return; }
+    if (!body.isConnected) { stopWatch(); capStation(false); return; }
+    timer = setTimeout(frame, gap);
     if (body.offsetParent === null) { capStation(false); return; }   // window hidden: skip the work, station back to normal
-    capStation(true);
+    capStation(lowfx);
+    const t0 = performance.now();
     tick++;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
     ctx.globalCompositeOperation = 'lighter';
@@ -1707,6 +1714,8 @@ function secondBrainLite(body) {
       ctx.drawImage(sp, (a.x + (b.x - a.x) * f) * S - 6, (a.y + (b.y - a.y) * f - 4 * Math.sin(f * 3.14)) * S - 6);
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    cost = cost ? cost * 0.8 + (performance.now() - t0) * 0.2 : performance.now() - t0;
+    gap = (opts.software || lowfx || cost > 6) ? 125 : 33;
   }
   let links = [];
   async function load() {
@@ -1736,19 +1745,65 @@ function secondBrainLite(body) {
         const chip = document.createElement('span'); chip.style.color = k === 'knowledge' ? '#7c7bff' : T[k].color;
         chip.textContent = '● ' + (k === 'knowledge' ? 'KNOWLEDGE' : T[k].label) + ' ' + counts[k]; legend.appendChild(chip);
       }
-      frame();
+      // the first frame after the data lands is drawn by the running loop
     } catch (e) { head.textContent = 'SECOND BRAIN · could not read notebooks (' + String(e && e.message || e).slice(0, 120) + ')'; }
   }
-  timer = setInterval(frame, 125);
+  frame();
   load();
+}
+
+/* What this PC can do, read once: the WebGL renderer name says whether there is a real GPU or a software stand-in
+   (SwiftShader / Microsoft Basic Render Driver / llvmpipe), plus CPU threads and memory where the browser tells. */
+let _brainHw = null;
+function brainHw() {
+  if (_brainHw) return _brainHw;
+  let gpu = 'unknown', software = false;
+  try {
+    const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) { software = true; gpu = 'no WebGL'; }
+    else {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      gpu = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+      software = /swiftshader|basic render|llvmpipe|softpipe|software/i.test(gpu);
+      const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    }
+  } catch (_) { software = true; }
+  const cores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 0;
+  const mem = (typeof navigator !== 'undefined' && navigator.deviceMemory) || 0;
+  return (_brainHw = { gpu: gpu.replace(/^ANGLE \((.*)\)$/, '$1').slice(0, 80), software, cores, mem });
+}
+// Which view this PC gets. A downgrade the PC earned (it stuttered under the 3D view) is remembered.
+function brainTier(hw) {
+  try { const t = localStorage.getItem('sb-tier'); if (t === 'lite' || t === 'full') return t; } catch (_) {}
+  if (hw.software) return 'lite';
+  if (hw.cores && hw.cores < 6) return 'lite';
+  if (hw.mem && hw.mem < 8) return 'lite';
+  return 'full';
+}
+/* How the whole page is actually doing: the gap between animation frames, averaged every 2 s. Cheap (one rAF), stops
+   when the window goes away. */
+function jankWatch(body, cb) {
+  let last = 0, sum = 0, n = 0, t0 = 0, raf = 0, off = false;
+  const step = now => {
+    if (off || !body.isConnected) return;
+    if (last && body.offsetParent !== null) { sum += now - last; n++; }
+    last = now; if (!t0) t0 = now;
+    if (now - t0 > 2000) { if (n) cb(sum / n); sum = 0; n = 0; t0 = now; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  return () => { off = true; cancelAnimationFrame(raf); };
 }
 
 /* The station-wide door. A per-agent brain lives in the dossier (MEMORY already answers "what does THIS agent
    know"); the second brain answers the other question — "what does the STATION know, and who learned it" — so it
-   gets its own window in the CREW dock. It opens WIDE and tall: the brain is the content, not a widget in a pane. */
+   gets its own window in the CREW dock. It opens WIDE and tall: the brain is the content, not a widget in a pane.
+   AUTO: a PC with a real GPU and room to spare gets the full 3D brain; if the page stutters under it, it drops to the
+   2D view live and remembers that. A PC without a usable GPU gets the 2D view straight away. */
 if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
   StationUI.registerWindow('brain', 'SECOND BRAIN', body => {
     body.classList.add('brain-body');
+    if (body._sbView) return;   // a rerender of the open window keeps the live view
     if (typeof SecondBrain === 'undefined') { body.innerHTML = '<p class="muted">The second brain view failed to load.</p>'; return; }
     // A throw here used to leave the window empty with no hint why; say what broke instead.
     const show = e => {
@@ -1758,8 +1813,30 @@ if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
       p.textContent = 'The second brain hit an error — ' + String((e && (e.stack || e.message)) || e).slice(0, 1200);
       body.style.position = 'relative'; body.appendChild(p);
     };
-    try { secondBrainLite(body); } catch (e) { show(e); }   // the full 3D view (SecondBrain.mount) stays in the file, unused here
-    { const t = document.createElement('div'); t.textContent = 'second brain · smooth-lite v12'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
+    const hw = brainHw();
+    const badge = tier => {
+      const t = document.createElement('div');
+      t.textContent = 'auto: ' + (tier === 'full' ? '3D' : hw.software ? '2D (no GPU)' : '2D') + ' · ' + hw.gpu + (hw.cores ? ' · ' + hw.cores + ' threads' : '');
+      t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      body.style.position = 'relative'; body.appendChild(t);
+    };
+    const lite = () => { body._sbView = 'lite'; body._sbLite = false; secondBrainLite(body, { software: hw.software }); badge('lite'); };
+    try {
+      if (brainTier(hw) === 'full') {
+        body._sbView = 'full';
+        const view = SecondBrain.mount(body);
+        badge('full');
+        let bad = 0;
+        const stop = jankWatch(body, avg => {
+          bad = avg > 70 ? bad + 1 : 0;
+          if (bad < 2) return;   // two slow 2 s windows in a row: this PC cannot carry the 3D view
+          stop();
+          try { localStorage.setItem('sb-tier', 'lite'); } catch (_) {}
+          try { view && view.destroy && view.destroy(); } catch (_) {}
+          lite();
+        });
+      } else lite();
+    } catch (e) { show(e); }
     // Anything the first frames throw (the draw loop runs outside mount) lands here too.
     const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
     window.addEventListener('error', onErr);
