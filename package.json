@@ -1,5 +1,5 @@
 {
-  "name": "starnet-harness",
+  "name": "agent-os",
   "version": "0.13.5",
   "private": true,
   "description": "A local-first, gamified desktop harness for building and running real AI-agent teams.",
@@ -7,11 +7,11 @@
   "author": "Andrew Sims",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/androoAGI/starnet.git"
+    "url": "git+https://github.com/coolboymasterfarm-ai/Agent-OS.git"
   },
-  "homepage": "https://github.com/androoAGI/starnet#readme",
+  "homepage": "https://github.com/coolboymasterfarm-ai/Agent-OS#readme",
   "bugs": {
-    "url": "https://github.com/androoAGI/starnet/issues"
+    "url": "https://github.com/coolboymasterfarm-ai/Agent-OS/issues"
   },
   "keywords": [
     "ai-agents",
@@ -26,6 +26,7 @@
     "starnet": "bin/starnet.js"
   },
   "scripts": {
+    "check": "node scripts/check.mjs",
     "validate:raw": "node test/validate_map.js",
     "test:http": "node scripts/timeout.mjs --label test:http --timeout=3600000 -- npm run test:http:raw",
     "test:http:raw": "node scripts/run-test-list.mjs test/http.list",

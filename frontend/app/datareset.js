@@ -189,7 +189,7 @@
     const about = el('p', 'set-about');
     about.innerHTML = 'Deletes everything Agent OS keeps on this computer and starts over at first run: your station, agents, chats, memory, routines and settings, saved browser sign-ins, files agents saved inside Agent OS, logs, the voice-model download, Agent OS\'s saved keys and tokens in the system keychain, and this window\'s stored data. <b>This cannot be undone.</b> Export a backup first if you might want it.';
     wrap.appendChild(about);
-    wrap.appendChild(el('p', 'set-about dim', 'Not touched: project folders you let agents work in, files exported to "StarNet deliverables", your Downloads folder, your Agent OS account and its credits (this computer is unlinked from it), and the Agent OS app itself (uninstall it separately).'));
+    wrap.appendChild(el('p', 'set-about dim', 'Not touched: project folders you let agents work in, files exported to the deliverables folder, your Downloads folder, your Agent OS account and its credits (this computer is unlinked from it), and the Agent OS app itself (uninstall it separately).'));
     if (!core) {
       wrap.appendChild(el('p', 'set-about dim', 'ERASE EVERYTHING runs in the Agent OS desktop app. Running Agent OS from source? Stop it, then delete the workspaces folder it was started with (the repo\'s workspaces/ folder, or the path in SKYNET_WORKSPACES).'));
       host.appendChild(wrap);

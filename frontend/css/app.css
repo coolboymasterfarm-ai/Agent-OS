@@ -303,7 +303,9 @@ input[type=file]::file-selector-button:hover { border-color: var(--ph); backgrou
   justify-content: center; gap: 10px; padding-bottom: 8vh; pointer-events: none;
 }
 .sp-logo {
-  width: min(58vw, 640px); height: auto; image-rendering: auto; user-select: none;
+  /* the AGENT OS wordmark is wider than tall (viewBox 4670.8 x 560): at the same visual mass
+     it needs more width than the old 640px box, so the title screen still reads as a logo */
+  width: min(64vw, 900px); height: auto; image-rendering: auto; user-select: none;
   filter: drop-shadow(0 0 18px var(--ph-glow)) drop-shadow(0 0 60px var(--ph-glow2));
   animation: sp-breathe 4.2s ease-in-out infinite;
 }
