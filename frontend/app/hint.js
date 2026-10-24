@@ -64,6 +64,15 @@
         'letter-spacing:.2px;}' +
       '.hint-bubble.on{opacity:1;transform:translateY(0);}' +
       '[data-hint]:not(button):not(a){cursor:help;}';   // controls keep their pointer; jargon spans get help
+    // the desktop app's CSP blocks a <style> added at runtime; a constructed stylesheet is not subject to style-src
+    try {
+      if (typeof CSSStyleSheet === 'function' && 'adoptedStyleSheets' in doc) {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(css);
+        doc.adoptedStyleSheets = doc.adoptedStyleSheets.concat(sheet);
+        return;
+      }
+    } catch (_) { /* fall through to the <style> element */ }
     const el = doc.createElement('style');
     el.id = 'hint-style';
     el.textContent = css;

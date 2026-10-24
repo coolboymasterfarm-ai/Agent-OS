@@ -324,8 +324,22 @@ const SecondBrain = (() => {
 .sb-wrap.compact .sb-dock{width:calc(100% - 28px)}
 @media (prefers-reduced-motion:reduce){.sb-live,.sb-agent.run .d{animation:none}.sb-row{animation:none}.sb-panel{transition:none}}
 `;
+  // The desktop app's CSP (Tauri hashes its inline <style>s, which switches 'unsafe-inline' off) silently blocks a
+  // <style> element added at runtime. Without these rules the canvas is not absolutely positioned, it sizes its own
+  // wrapper, and fit() grows it forever (518,784px tall on a real PC): the app froze and the window stayed blank.
+  // A constructed stylesheet is not subject to style-src. The <style> stays as the fallback for old engines.
+  let cssDone = false;
   function injectCss() {
-    if (document.getElementById('sb-styles')) return;
+    if (cssDone) return;
+    cssDone = true;
+    try {
+      if (typeof CSSStyleSheet === 'function' && 'adoptedStyleSheets' in document) {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(CSS);
+        document.adoptedStyleSheets = document.adoptedStyleSheets.concat(sheet);
+        return;
+      }
+    } catch (_) { /* fall through to the <style> element */ }
     const s = document.createElement('style');
     s.id = 'sb-styles';
     s.textContent = CSS;
@@ -1028,13 +1042,25 @@ const SecondBrain = (() => {
       }
     }
 
+    // The station scene keeps redrawing at full rate behind this window. Profiled on a real iGPU PC it took ~30% of
+    // the main thread while the brain covered it; 4 fps behind the glass is enough and halved the page's busy time.
+    let stationCapped = false;
+    const capStation = on => {
+      if (on === stationCapped) return;
+      stationCapped = on;
+      try { if (typeof World !== 'undefined' && World.setFrameCap) World.setFrameCap(on ? 250 : 0); } catch (_) {}
+    };
     function loop(now) {
       if (!state.alive) return;
       // a rebuilt console throws its old panes away without calling destroy(); a detached host must stop its own loop
       if (!host.isConnected) { cleanup(); return; }
+      const shown = host.offsetParent !== null || document.fullscreenElement === wrap;
+      capStation(shown);
+      // a frame that costs more than ~8ms draws at 30 fps instead of 60: same motion, half the work on a slow PC
+      if (shown && state.cost > 8 && state.last && now - state.last < 30) { state.raf = requestAnimationFrame(loop); return; }
       const dt = Math.min(0.05, state.last ? (now - state.last) / 1000 : 0.016);
       state.last = now;
-      if (host.offsetParent !== null || document.fullscreenElement === wrap) {
+      if (shown) {
         state.t += dt;
         if (state.warm > 0) { relax(state.warm > 14 ? 12 : 6); state.warm--; }
         const c = state.cam;
@@ -1045,7 +1071,10 @@ const SecondBrain = (() => {
         }
         if (state.autoRotate && !state.drag && now - state.lastInput > 2600) c.yaw += dt * 0.11;
         if (state.replay) stepReplay(dt);
+        const t0 = performance.now();
         draw(dt);
+        const ms = performance.now() - t0;
+        state.cost = state.cost ? state.cost * 0.9 + ms * 0.1 : ms;
       }
       state.raf = requestAnimationFrame(loop);
     }
@@ -1572,6 +1601,7 @@ const SecondBrain = (() => {
     function cleanup() {
       if (!state.alive) return;
       state.alive = false;
+      capStation(false);
       if (state.raf) cancelAnimationFrame(state.raf);
       if (ro) ro.disconnect(); else window.removeEventListener('resize', queueFit);
       if (refreshTimer) clearTimeout(refreshTimer);
@@ -1605,8 +1635,15 @@ const SecondBrain = (() => {
 if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
   StationUI.registerWindow('brain', 'SECOND BRAIN', body => {
     body.classList.add('brain-body');
-    if (typeof SecondBrain !== 'undefined') SecondBrain.mount(body);
-    else body.innerHTML = '<p class="muted">The second brain view failed to load.</p>';
+    if (typeof SecondBrain === 'undefined') { body.innerHTML = '<p class="muted">The second brain view failed to load.</p>'; return; }
+    // a throw here used to leave the window empty with no hint why: say what broke instead
+    try { SecondBrain.mount(body); }
+    catch (e) {
+      const p = document.createElement('pre');
+      p.style.cssText = 'margin:0;padding:12px;white-space:pre-wrap;color:#ffb3c0;background:#2a0a10;user-select:text';
+      p.textContent = 'The second brain hit an error — ' + String((e && (e.stack || e.message)) || e).slice(0, 1200);
+      body.appendChild(p);
+    }
   }, { wide: true, className: 'brain-win' });
 }
 
