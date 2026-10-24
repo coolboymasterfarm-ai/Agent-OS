@@ -642,7 +642,8 @@ const SecondBrain = (() => {
     function fit() {
       const r = wrap.getBoundingClientRect();
       const w = Math.max(320, Math.round(r.width)), h = Math.max(360, Math.round(r.height));
-      const dpr = state.slow ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      // LOW-GRAPHICS: draw at a fraction of the screen resolution and let CSS stretch it; same picture, far fewer pixels (no GPU).
+      const dpr = state.slow ? 0.45 : 0.65;
       if (w === state.w && h === state.h && dpr === state.dpr) return;
       state.w = w; state.h = h; state.dpr = dpr;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
@@ -702,7 +703,7 @@ const SecondBrain = (() => {
       const breathe = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(state.t * 0.7);
       const teamFocus = state.team ? REGIONS.indexOf(state.team) : -2;
       const dotScale = Math.max(0.9, S * 0.0048);
-      for (let i = 0; i < sh.length; i += 7) {
+      for (let i = 0; i < sh.length; i += 14) {   // every other point: half the dots, same silhouette
         const p = project(sh[i], sh[i + 1], sh[i + 2]);
         const facing = rotN(sh[i + 3], sh[i + 4], sh[i + 5]);
         const rim = 1 - Math.abs(facing);
@@ -1054,7 +1055,7 @@ const SecondBrain = (() => {
         draw(dt);
         const cost = performance.now() - t0;
         state.cost = state.cost ? state.cost * 0.7 + cost * 0.3 : cost;
-        state.gap = Math.max(33, Math.min(250, Math.round(state.cost * 3)));   // ~30fps while cheap, backs off when slow
+        state.gap = Math.max(66, Math.min(250, Math.round(state.cost * 3)));   // ~30fps while cheap, backs off when slow
         if (state.cost > 40 && !state.slow) { state.slow = true; fit(); }
       }
       state.raf = requestAnimationFrame(loop);
