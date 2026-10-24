@@ -370,10 +370,16 @@ const NeedsYou = (() => {
     lis.forEach(li => { li.hidden = false; });
     const waitsOf = li => Number(li.dataset && li.dataset.nyN) || 1;
     const total = Number(more.dataset && more.dataset.nyWaits) || 0;
-    let shown = lis.length, shownWaits = lis.reduce((s, li) => s + waitsOf(li), 0);
+    let shownWaits = 0;
     const fold = () => { const n = Math.max(0, total - shownWaits); more.hidden = n <= 0; const t = n + ' more'; if (more.textContent !== t) more.textContent = t; };
-    fold();
-    while (shown > 1 && host.scrollHeight > host.clientHeight + 1) { const li = lis[--shown]; li.hidden = true; shownWaits -= waitsOf(li); fold(); }
+    const show = k => { shownWaits = 0; lis.forEach((li, i) => { li.hidden = i >= k; if (i < k) shownWaits += waitsOf(li); }); fold(); };
+    const fits = k => { show(k); return !(host.scrollHeight > host.clientHeight + 1); };
+    // Each fits() forces a whole-page layout. Hiding one row at a time cost one layout per row on every 1 s heartbeat:
+    // with ~70 waits that froze a PC without a GPU. Binary search finds the same largest count in ~7 layouts.
+    if (fits(lis.length)) return;
+    let lo = 1, hi = lis.length - 1;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(mid)) lo = mid; else hi = mid - 1; }
+    show(lo);
   }
   /* THE TEXT COLUMN NEVER MOVES WITH THE SECTION'S OWN SCROLL (review 10-16). The section reserves its scrollbar's gutter
      (pipglass.css: scrollbar-gutter: stable), and the gutter's width, measured here into --ny-gutter, is taken back out of
