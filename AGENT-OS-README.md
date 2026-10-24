@@ -1,46 +1,45 @@
-# Agent-OS
+# Agent OS
 
-This repository is set up to document and automate the Agent OS local AI agent stack from the public source repo and its GitHub release assets.
+Agent OS is the desktop app in this repository: a local-first, pixel-art station where AI
+agents do real work with real models and tools. The product documentation lives in
+[README.md](README.md); this file only orients you in the source tree.
 
-## Agent OS source repository
-
-- Repo: https://github.com/androoAGI/starnet
-- Releases: https://github.com/androoAGI/starnet/releases
-- Latest release homepage: https://github.com/androoAGI/starnet-releases/releases/latest
-
-## Quick install for a Chromebook / browser workflow
-
-Use the following commands in a terminal on your machine to clone the Agent OS repo and download the latest release assets, including any Windows EXE binaries that are published in GitHub Releases:
+## Run it
 
 ```bash
-git clone https://github.com/androoAGI/starnet.git
-cd starnet
-mkdir -p ../starnet-release-assets
-
-# Download latest GitHub release assets (including .exe, .dmg, .AppImage, etc.)
-curl -fsSL https://api.github.com/repos/androoAGI/starnet/releases/latest \
-  | python3 -c 'import sys, json; data=json.load(sys.stdin); \
-assets = data.get("assets", []); \
-for a in assets: print(a["browser_download_url"])' \
-  | while IFS= read -r url; do
-      [ -n "$url" ] && curl -L --fail --output "../starnet-release-assets/$(basename "$url")" "$url"
-    done
-
-ls -l ../starnet-release-assets
+npm ci          # install dependencies once
+npm start       # serves the UI and the agent engine together on http://127.0.0.1:8787
 ```
 
-This keeps the source repo and the bundled release binaries together in a local folder for easy access.
+`npm start` is the whole product: the same process serves `frontend/` and runs the agent
+loop. Opening the frontend from a plain static server (or as a file) leaves the station with
+no engine behind it, and the top bar will honestly read **LINK DOWN** — that is not a bug in
+the app, it means the engine is not running.
 
-## Notes
+Desktop build (Tauri shell + the same sidecar):
 
-- The source code lives in the `starnet` repository.
-- Executables are typically published under GitHub Releases rather than committed directly into the main repo tree.
-- This repository here does not contain the Agent OS binary itself; it contains an automation workflow and reference information for downloading it.
+```bash
+npm run desktop:dev
+npm run desktop:build
+```
 
-## Recommended PR title
+## Check your changes before you rely on them
 
-`Add Agent OS source and release automation guidance`
+```bash
+npm run check     # fast: syntax + reference + JSON sanity across the tree (seconds)
+npm run test:fast # the real merge gate (~1250 steps); run it before a release
+```
 
-## Recommended PR description
+`npm run check` is the cheap guard against the usual self-inflicted breaks — a typo in a
+module, an edited `index.html` that points at a file that no longer exists, a stylesheet or
+script added without the file being saved. `npm run test:fast` is the authoritative gate.
 
-This change adds guidance for retrieving the Agent OS source repo and the latest GitHub release assets, including executable binaries distributed through the project’s Releases page.
+## Upstream
+
+Agent OS is a fork of [StarNet](https://github.com/androoAGI/starnet). The MIT licence covers
+the code; the StarNet name and original artwork are not licensed with it, which is why this
+fork carries its own wordmark. Internal identifiers (`STARNET_*` env names, the
+`X-StarNet-Token` header, the `StarNet` workspace folder, `productName`) intentionally keep
+their original names: they are the on-disk and wire contracts that keep existing installs,
+saves and the updater working. `test/brand-identifiers.test.js` pins both directions of that
+rule — display copy says Agent OS, load-bearing identifiers stay put.

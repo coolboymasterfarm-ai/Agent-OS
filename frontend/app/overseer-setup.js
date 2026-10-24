@@ -26,7 +26,7 @@ window.OverseerSetup = (() => {
     const logo = el('ov-connection-logo');
     if (logo) {
       logo.classList.toggle('ov-starnet-logo', provider === 'starnet');
-      logo.style.setProperty('--provider-icon', 'url("' + new URL('assets/brand/' + (provider === 'starnet' ? 'starnet-wordmark.svg' : 'providers/' + (provider === 'codex' ? 'openai' : provider) + '.svg'), document.baseURI).href + '")');
+      logo.style.setProperty('--provider-icon', 'url("' + new URL('assets/brand/' + (provider === 'starnet' ? 'agent-os-wordmark.svg' : 'providers/' + (provider === 'codex' ? 'openai' : provider) + '.svg'), document.baseURI).href + '")');
     }
   }
   function beginConnection() {
