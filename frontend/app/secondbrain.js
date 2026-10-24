@@ -1625,6 +1625,7 @@ if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
       body.style.position = 'relative'; body.appendChild(p);
     };
     try { SecondBrain.mount(body); } catch (e) { show(e); }
+    { const t = document.createElement('div'); t.textContent = 'second brain · low-graphics v8'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
     // Anything the first frames throw (the draw loop runs outside mount) lands here too.
     const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
     window.addEventListener('error', onErr);
