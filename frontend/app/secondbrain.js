@@ -641,7 +641,7 @@ const SecondBrain = (() => {
     function fit() {
       const r = wrap.getBoundingClientRect();
       const w = Math.max(320, Math.round(r.width)), h = Math.max(360, Math.round(r.height));
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const dpr = state.slow ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       if (w === state.w && h === state.h && dpr === state.dpr) return;
       state.w = w; state.h = h; state.dpr = dpr;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
@@ -1032,6 +1032,10 @@ const SecondBrain = (() => {
       if (!state.alive) return;
       // a rebuilt console throws its old panes away without calling destroy(); a detached host must stop its own loop
       if (!host.isConnected) { cleanup(); return; }
+      // FRAME GOVERNOR: on a loaded PC this redraw can starve the whole webview (it went "unresponsive" and the window
+      // came up blank). When a frame costs more than ~20ms, draw less often so the rest of the app keeps its share,
+      // and past ~40ms also fall back to 1x resolution.   shortcut: fixed thresholds, tune if a real GPU still stutters.
+      if (state.gap && now - state.last < state.gap) { state.raf = requestAnimationFrame(loop); return; }
       const dt = Math.min(0.05, state.last ? (now - state.last) / 1000 : 0.016);
       state.last = now;
       if (host.offsetParent !== null || document.fullscreenElement === wrap) {
@@ -1045,7 +1049,12 @@ const SecondBrain = (() => {
         }
         if (state.autoRotate && !state.drag && now - state.lastInput > 2600) c.yaw += dt * 0.11;
         if (state.replay) stepReplay(dt);
+        const t0 = performance.now();
         draw(dt);
+        const cost = performance.now() - t0;
+        state.cost = state.cost ? state.cost * 0.7 + cost * 0.3 : cost;
+        state.gap = state.cost > 20 ? Math.min(250, Math.round(state.cost * 3)) : 0;
+        if (state.cost > 40 && !state.slow) { state.slow = true; fit(); }
       }
       state.raf = requestAnimationFrame(loop);
     }
@@ -1605,8 +1614,19 @@ const SecondBrain = (() => {
 if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
   StationUI.registerWindow('brain', 'SECOND BRAIN', body => {
     body.classList.add('brain-body');
-    if (typeof SecondBrain !== 'undefined') SecondBrain.mount(body);
-    else body.innerHTML = '<p class="muted">The second brain view failed to load.</p>';
+    if (typeof SecondBrain === 'undefined') { body.innerHTML = '<p class="muted">The second brain view failed to load.</p>'; return; }
+    // A throw here used to leave the window empty with no hint why; say what broke instead.
+    const show = e => {
+      if (!body.isConnected || body.querySelector('.sb-err')) return;
+      const p = document.createElement('pre');
+      p.className = 'sb-err'; p.style.cssText = 'position:absolute;left:0;right:0;top:0;z-index:99;margin:0;white-space:pre-wrap;padding:12px;background:#2a0a10;color:#ffb3c0;user-select:text;max-height:60%;overflow:auto';
+      p.textContent = 'The second brain hit an error — ' + String((e && (e.stack || e.message)) || e).slice(0, 1200);
+      body.style.position = 'relative'; body.appendChild(p);
+    };
+    try { SecondBrain.mount(body); } catch (e) { show(e); }
+    // Anything the first frames throw (the draw loop runs outside mount) lands here too.
+    const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
+    window.addEventListener('error', onErr);
   }, { wide: true, className: 'brain-win' });
 }
 
