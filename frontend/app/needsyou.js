@@ -370,10 +370,16 @@ const NeedsYou = (() => {
     lis.forEach(li => { li.hidden = false; });
     const waitsOf = li => Number(li.dataset && li.dataset.nyN) || 1;
     const total = Number(more.dataset && more.dataset.nyWaits) || 0;
-    let shown = lis.length, shownWaits = lis.reduce((s, li) => s + waitsOf(li), 0);
+    let shownWaits = 0;
     const fold = () => { const n = Math.max(0, total - shownWaits); more.hidden = n <= 0; const t = n + ' more'; if (more.textContent !== t) more.textContent = t; };
-    fold();
-    while (shown > 1 && host.scrollHeight > host.clientHeight + 1) { const li = lis[--shown]; li.hidden = true; shownWaits -= waitsOf(li); fold(); }
+    const show = k => { shownWaits = 0; lis.forEach((li, i) => { li.hidden = i >= k; if (i < k) shownWaits += waitsOf(li); }); fold(); };
+    const fits = k => { show(k); return !(host.scrollHeight > host.clientHeight + 1); };
+    // Each fits() forces a whole-page layout. Hiding one row at a time cost one layout per row on every 1 s heartbeat:
+    // with ~70 waits that froze a PC without a GPU. Binary search finds the same largest count in ~7 layouts.
+    if (fits(lis.length)) return;
+    let lo = 1, hi = lis.length - 1;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(mid)) lo = mid; else hi = mid - 1; }
+    show(lo);
   }
   /* THE TEXT COLUMN NEVER MOVES WITH THE SECTION'S OWN SCROLL (review 10-16). The section reserves its scrollbar's gutter
      (pipglass.css: scrollbar-gutter: stable), and the gutter's width, measured here into --ny-gutter, is taken back out of
@@ -388,7 +394,13 @@ const NeedsYou = (() => {
     const g = Math.max(0, host.offsetWidth - host.clientWidth - 2 * (Number(host.clientLeft) || 0)) + 'px';
     if (host.style.getPropertyValue('--ny-gutter') !== g) host.style.setProperty('--ny-gutter', g);
   }
-  const fit = host => { fitGutter(host); fitRows(host); fitGutter(host); };
+  let fitRoom = '';   // the room the rows were last fitted to
+  const roomOf = host => host.clientWidth + 'x' + host.clientHeight + '@' + (typeof getComputedStyle === 'function' && typeof document !== 'undefined' && document.documentElement ? getComputedStyle(document.documentElement).fontSize : '');
+  const fit = host => { fitGutter(host); fitRows(host); fitGutter(host); fitRoom = roomOf(host); };
+  // the 1 s heartbeat refits only when the room moved (TEXT SIZE, the rail's width): a refit forces whole-page layouts,
+  // and running it every second for nothing kept a GPU-less PC's main thread pinned.
+  // shortcut: an age label growing a row's height alone does not trigger a refit; the next rebuild or resize catches it.
+  const refit = host => { if (roomOf(host) !== fitRoom) fit(host); };
   // each card's portrait: the same figure the CREW card paints (AgentPortraits), from the agent the wait names
   function paintFaces(host) {
     if (typeof AgentPortraits === 'undefined' || !AgentPortraits.paint || !has(App, 'agents')) return;
@@ -422,7 +434,7 @@ const NeedsYou = (() => {
         const el = li.querySelector('.ny-age'), text = age(since.get(li.dataset.nyKey), now);
         if (el && el.textContent !== text) el.textContent = text;
       });
-      fit(host);               // …and how many rows fit whole in the room (TEXT SIZE or the rail's width may have moved)
+      refit(host);             // …and how many rows fit whole in the room (TEXT SIZE or the rail's width may have moved)
       remeasure(host, list);   // …then re-read each line the rail now shows (a row just unfolded is read before it paints)
       return;
     }
