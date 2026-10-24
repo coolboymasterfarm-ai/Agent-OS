@@ -64,6 +64,7 @@ const World = (() => {
   CRT.film = 0;
   if (typeof WorldRenderer !== 'undefined' && WorldRenderer.enabled()) Object.assign(CRT, WorldRenderer.PHOSPHOR);
   let _warpCv = null, _warpCtx = null;   // the barrel-warp snapshot buffer — see drawCurve()
+  let _cpuWarpOff = false, _cpuWarpMs = 0, _cpuWarpN = 0;   // the CPU curve's own cost guard — see drawCurve()
   let _lut = null, _lutKey = '', _outImg = null;   // CPU per-pixel barrel-warp inverse-map LUT + output buffer — see buildLUT()/drawCurveCPU()
   let _gl = null, _glc = null, _glProg = null, _glTex = null, _glKLoc = null, _glAberrLoc = null, _glVigLoc = null, _glOverLoc = null, _glReady = false, _glFailed = false;   // GPU barrel-warp (WebGL) — see initGL()/drawCurveGL()
   let _glProbeOk = false, _glProbeTries = 0, _glProbeSkip = 0, _glProbeClean = 0, _glProbeCv = null;   // one-time GL output sanity probe — see drawCurveGL()
@@ -7341,7 +7342,16 @@ const World = (() => {
     if (!cv || (CRT.curve <= 0 && !sharpAmt()) || document.body.classList.contains('no-scan')) return;
     const k = Math.max(0, +CRT.curve || 0), W = cv.width, H = cv.height;
     if (!_glFailed && drawCurveGL(k, W, H)) return;   // GPU path (near-free); on any failure it flips _glFailed
-    drawCurveCPU(k, W, H);                             // CPU fallback (per-pixel LUT) — identical look, heavier
+    // CPU fallback (per-pixel LUT) — identical look, but it reads the whole accelerated frame back from the GPU and
+    // walks every pixel in JS, every frame. On a weak iGPU under load that cost 100ms+ a frame and froze the whole app
+    // (2026-10-24: AMD Radeon iGPU, render-process-unresponsive, ~10 full-frame readbacks/s). When it costs more than
+    // a few ms a frame, drop the bow for the session: a flat feed beats a frozen one.
+    if (_cpuWarpOff) return;
+    const t0 = performance.now();
+    drawCurveCPU(k, W, H);
+    const dt = performance.now() - t0;
+    _cpuWarpMs = _cpuWarpMs ? _cpuWarpMs * 0.7 + dt * 0.3 : dt;
+    if (++_cpuWarpN >= 3 && _cpuWarpMs > 8) { _cpuWarpOff = true; console.warn('[crt] CPU curve costs ' + _cpuWarpMs.toFixed(1) + 'ms a frame — curve off for this session'); }
   }
 
   // GPU barrel warp: upload the frame as a texture and remap it in a fragment shader (same inverse of
@@ -11505,7 +11515,7 @@ const World = (() => {
     let means = null;
     try { if (cv) means = probeMeans(cv); } catch (_) {}
     return {
-      path: _glFailed ? 'cpu' : (_glReady ? 'webgl' : 'uninitialized'),
+      path: _glFailed ? (_cpuWarpOff ? 'off (cpu too slow)' : 'cpu') : (_glReady ? 'webgl' : 'uninitialized'), cpuWarpMs: Math.round(_cpuWarpMs * 10) / 10,
       ready: _glReady, failed: _glFailed, lost: glContextLost(_gl),
       frameSum: means ? Math.round(means[0] + means[1] + means[2]) : null
     };
