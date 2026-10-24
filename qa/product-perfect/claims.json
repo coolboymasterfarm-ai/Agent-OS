@@ -18,8 +18,8 @@
   "expectedClaimCount": 37,
   "releaseSurface": {
     "algorithm": "sha256",
-    "sourceCommit": "168238891cfe5b40f9835e54d1fb47dbb74585a9",
-    "pathSetSha256": "59d457d627f0fdb092ed6bab5a6e7652d83e6d2c67601895ec523ec09485686d",
+    "sourceCommit": "2ad6fce7fde3086afa00fa58d40a343d375c4ec0",
+    "pathSetSha256": "384ec0d3b771b927790745dea9436885abf6056f1087cf2bfa55a4b971fc5959",
     "files": [
       {
         "path": "INSTALL.md",
@@ -1387,6 +1387,11 @@
         "sha256": "8f439821808732985485b2c60fc0e0cf662fc303e80c5a8281a7e57db8c9e67d"
       },
       {
+        "path": "frontend/app/windows/teams.js",
+        "bytes": 10616,
+        "sha256": "f2f257d6adbeced973c46d5da1611646fe0a858568c0d5337308757e60b1f600"
+      },
+      {
         "path": "frontend/app/windows/trophies.js",
         "bytes": 4513,
         "sha256": "8e2887d45147fd52e54e713cf0b5af0fa31396ad5b386484b2297bbf8ff89616"
@@ -1813,8 +1818,8 @@
       },
       {
         "path": "frontend/index.html",
-        "bytes": 100518,
-        "sha256": "22af8061d8915605fd4abc3630193a45ec028992082e45ac91d228d93d0c273f"
+        "bytes": 100851,
+        "sha256": "fddf72924dadc894b175c9e91a0276b1167ab9cf89ccd16109c2e44b255f4300"
       },
       {
         "path": "frontend/js/arcade.js",
