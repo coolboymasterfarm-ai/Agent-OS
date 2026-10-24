@@ -394,7 +394,13 @@ const NeedsYou = (() => {
     const g = Math.max(0, host.offsetWidth - host.clientWidth - 2 * (Number(host.clientLeft) || 0)) + 'px';
     if (host.style.getPropertyValue('--ny-gutter') !== g) host.style.setProperty('--ny-gutter', g);
   }
-  const fit = host => { fitGutter(host); fitRows(host); fitGutter(host); };
+  let fitRoom = '';   // the room the rows were last fitted to
+  const roomOf = host => host.clientWidth + 'x' + host.clientHeight + '@' + (typeof getComputedStyle === 'function' && typeof document !== 'undefined' && document.documentElement ? getComputedStyle(document.documentElement).fontSize : '');
+  const fit = host => { fitGutter(host); fitRows(host); fitGutter(host); fitRoom = roomOf(host); };
+  // the 1 s heartbeat refits only when the room moved (TEXT SIZE, the rail's width): a refit forces whole-page layouts,
+  // and running it every second for nothing kept a GPU-less PC's main thread pinned.
+  // shortcut: an age label growing a row's height alone does not trigger a refit; the next rebuild or resize catches it.
+  const refit = host => { if (roomOf(host) !== fitRoom) fit(host); };
   // each card's portrait: the same figure the CREW card paints (AgentPortraits), from the agent the wait names
   function paintFaces(host) {
     if (typeof AgentPortraits === 'undefined' || !AgentPortraits.paint || !has(App, 'agents')) return;
@@ -428,7 +434,7 @@ const NeedsYou = (() => {
         const el = li.querySelector('.ny-age'), text = age(since.get(li.dataset.nyKey), now);
         if (el && el.textContent !== text) el.textContent = text;
       });
-      fit(host);               // …and how many rows fit whole in the room (TEXT SIZE or the rail's width may have moved)
+      refit(host);             // …and how many rows fit whole in the room (TEXT SIZE or the rail's width may have moved)
       remeasure(host, list);   // …then re-read each line the rail now shows (a row just unfolded is read before it paints)
       return;
     }
