@@ -643,7 +643,7 @@ const SecondBrain = (() => {
       const r = wrap.getBoundingClientRect();
       const w = Math.max(320, Math.round(r.width)), h = Math.max(360, Math.round(r.height));
       // LOW-GRAPHICS: draw at a fraction of the screen resolution and let CSS stretch it; same picture, far fewer pixels (no GPU).
-      const dpr = state.slow ? 0.45 : 0.65;
+      const dpr = state.slow ? 0.4 : 0.55;
       if (w === state.w && h === state.h && dpr === state.dpr) return;
       state.w = w; state.h = h; state.dpr = dpr;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
@@ -998,12 +998,11 @@ const SecondBrain = (() => {
         if (n.glow > 0) n.glow = Math.max(0, n.glow - dt * 0.5);
       }
       ctx.globalCompositeOperation = 'lighter';   // additive light: order-independent, so nothing needs depth-sorting
-      drawVolume();
-      drawShell();
+      drawShell();   // drawVolume() (big soft gradient) skipped in low-graphics mode
       drawEdges();
       drawNodes();
       drawPulses(dt);
-      if (!reduced) {   // a faint holographic scan band; decoration
+      if (false) {   // scan band off in low-graphics mode (shortcut: restore with !reduced on a PC with a GPU)
         const yy = ((state.t * 0.08) % 1.2 - 0.1) * state.h;
         const g = ctx.createLinearGradient(0, yy - 40, 0, yy + 40);
         g.addColorStop(0, 'rgba(143,200,255,0)'); g.addColorStop(0.5, 'rgba(143,200,255,.035)'); g.addColorStop(1, 'rgba(143,200,255,0)');
@@ -1055,7 +1054,7 @@ const SecondBrain = (() => {
         draw(dt);
         const cost = performance.now() - t0;
         state.cost = state.cost ? state.cost * 0.7 + cost * 0.3 : cost;
-        state.gap = Math.max(66, Math.min(250, Math.round(state.cost * 3)));   // ~30fps while cheap, backs off when slow
+        state.gap = Math.max(80, Math.min(250, Math.round(state.cost * 3)));   // ~30fps while cheap, backs off when slow
         if (state.cost > 40 && !state.slow) { state.slow = true; fit(); }
       }
       state.raf = requestAnimationFrame(loop);
