@@ -324,8 +324,22 @@ const SecondBrain = (() => {
 .sb-wrap.compact .sb-dock{width:calc(100% - 28px)}
 @media (prefers-reduced-motion:reduce){.sb-live,.sb-agent.run .d{animation:none}.sb-row{animation:none}.sb-panel{transition:none}}
 `;
+  // The desktop app's CSP (Tauri hashes its inline <style>s, which switches 'unsafe-inline' off) silently blocks a
+  // <style> element added at runtime. Without these rules the canvas is not absolutely positioned, it sizes its own
+  // wrapper, and fit() grows it forever (518,784px tall on a real PC): the app froze and the window stayed blank.
+  // A constructed stylesheet is not subject to style-src. The <style> stays as the fallback for old engines.
+  let cssDone = false;
   function injectCss() {
-    if (document.getElementById('sb-styles')) return;
+    if (cssDone) return;
+    cssDone = true;
+    try {
+      if (typeof CSSStyleSheet === 'function' && 'adoptedStyleSheets' in document) {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(CSS);
+        document.adoptedStyleSheets = document.adoptedStyleSheets.concat(sheet);
+        return;
+      }
+    } catch (_) { /* fall through to the <style> element */ }
     const s = document.createElement('style');
     s.id = 'sb-styles';
     s.textContent = CSS;
@@ -1605,8 +1619,15 @@ const SecondBrain = (() => {
 if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
   StationUI.registerWindow('brain', 'SECOND BRAIN', body => {
     body.classList.add('brain-body');
-    if (typeof SecondBrain !== 'undefined') SecondBrain.mount(body);
-    else body.innerHTML = '<p class="muted">The second brain view failed to load.</p>';
+    if (typeof SecondBrain === 'undefined') { body.innerHTML = '<p class="muted">The second brain view failed to load.</p>'; return; }
+    // a throw here used to leave the window empty with no hint why: say what broke instead
+    try { SecondBrain.mount(body); }
+    catch (e) {
+      const p = document.createElement('pre');
+      p.style.cssText = 'margin:0;padding:12px;white-space:pre-wrap;color:#ffb3c0;background:#2a0a10;user-select:text';
+      p.textContent = 'The second brain hit an error — ' + String((e && (e.stack || e.message)) || e).slice(0, 1200);
+      body.appendChild(p);
+    }
   }, { wide: true, className: 'brain-win' });
 }
 

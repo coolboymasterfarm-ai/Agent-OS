@@ -179,7 +179,7 @@ const SecondBrain = (() => {
     if (SPRITES[color]) return SPRITES[color];
     const c = document.createElement('canvas');
     c.width = c.height = 64;
-    const g = c.getContext('2d', { willReadFrequently: true });
+    const g = c.getContext('2d');
     const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
     gr.addColorStop(0, 'rgba(255,255,255,1)');
     gr.addColorStop(0.14, rgba(color, 0.95));
@@ -324,8 +324,22 @@ const SecondBrain = (() => {
 .sb-wrap.compact .sb-dock{width:calc(100% - 28px)}
 @media (prefers-reduced-motion:reduce){.sb-live,.sb-agent.run .d{animation:none}.sb-row{animation:none}.sb-panel{transition:none}}
 `;
+  // The desktop app's CSP (Tauri hashes its inline <style>s, which switches 'unsafe-inline' off) silently blocks a
+  // <style> element added at runtime. Without these rules the canvas is not absolutely positioned, it sizes its own
+  // wrapper, and fit() grows it forever (518,784px tall on a real PC): the app froze and the window stayed blank.
+  // A constructed stylesheet is not subject to style-src. The <style> stays as the fallback for old engines.
+  let cssDone = false;
   function injectCss() {
-    if (document.getElementById('sb-styles')) return;
+    if (cssDone) return;
+    cssDone = true;
+    try {
+      if (typeof CSSStyleSheet === 'function' && 'adoptedStyleSheets' in document) {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(CSS);
+        document.adoptedStyleSheets = document.adoptedStyleSheets.concat(sheet);
+        return;
+      }
+    } catch (_) { /* fall through to the <style> element */ }
     const s = document.createElement('style');
     s.id = 'sb-styles';
     s.textContent = CSS;
@@ -365,8 +379,7 @@ const SecondBrain = (() => {
     wrap.setAttribute('aria-label', 'Second brain — every agent\'s memory as one brain. Drag to orbit, scroll to zoom.');
     const canvas = el('canvas', 'sb-canvas');
     canvas.setAttribute('aria-hidden', 'true');
-    // CPU-backed on purpose: the GPU canvas path flashed then went blank in the Windows webview (same picture, no GPU raster).
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d');
     const bg = document.createElement('canvas');
 
     const top = el('div', 'sb-top');
@@ -642,8 +655,7 @@ const SecondBrain = (() => {
     function fit() {
       const r = wrap.getBoundingClientRect();
       const w = Math.max(320, Math.round(r.width)), h = Math.max(360, Math.round(r.height));
-      // LOW-GRAPHICS: draw at a fraction of the screen resolution and let CSS stretch it; same picture, far fewer pixels (no GPU).
-      const dpr = state.slow ? 0.4 : 0.55;
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       if (w === state.w && h === state.h && dpr === state.dpr) return;
       state.w = w; state.h = h; state.dpr = dpr;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
@@ -658,7 +670,7 @@ const SecondBrain = (() => {
     function paintBackground() {
       const w = state.w, h = state.h, d = state.dpr;
       bg.width = Math.round(w * d); bg.height = Math.round(h * d);
-      const g = bg.getContext('2d', { willReadFrequently: true });
+      const g = bg.getContext('2d');
       g.setTransform(d, 0, 0, d, 0, 0);
       const base = g.createRadialGradient(w / 2, h * 0.46, 0, w / 2, h * 0.46, Math.max(w, h) * 0.75);
       base.addColorStop(0, '#0b1430'); base.addColorStop(0.45, '#050a1a'); base.addColorStop(1, '#010207');
@@ -703,7 +715,7 @@ const SecondBrain = (() => {
       const breathe = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(state.t * 0.7);
       const teamFocus = state.team ? REGIONS.indexOf(state.team) : -2;
       const dotScale = Math.max(0.9, S * 0.0048);
-      for (let i = 0; i < sh.length; i += 14) {   // every other point: half the dots, same silhouette
+      for (let i = 0; i < sh.length; i += 7) {
         const p = project(sh[i], sh[i + 1], sh[i + 2]);
         const facing = rotN(sh[i + 3], sh[i + 4], sh[i + 5]);
         const rim = 1 - Math.abs(facing);
@@ -998,11 +1010,12 @@ const SecondBrain = (() => {
         if (n.glow > 0) n.glow = Math.max(0, n.glow - dt * 0.5);
       }
       ctx.globalCompositeOperation = 'lighter';   // additive light: order-independent, so nothing needs depth-sorting
-      drawShell();   // drawVolume() (big soft gradient) skipped in low-graphics mode
+      drawVolume();
+      drawShell();
       drawEdges();
       drawNodes();
       drawPulses(dt);
-      if (false) {   // scan band off in low-graphics mode (shortcut: restore with !reduced on a PC with a GPU)
+      if (!reduced) {   // a faint holographic scan band; decoration
         const yy = ((state.t * 0.08) % 1.2 - 0.1) * state.h;
         const g = ctx.createLinearGradient(0, yy - 40, 0, yy + 40);
         g.addColorStop(0, 'rgba(143,200,255,0)'); g.addColorStop(0.5, 'rgba(143,200,255,.035)'); g.addColorStop(1, 'rgba(143,200,255,0)');
@@ -1033,10 +1046,6 @@ const SecondBrain = (() => {
       if (!state.alive) return;
       // a rebuilt console throws its old panes away without calling destroy(); a detached host must stop its own loop
       if (!host.isConnected) { cleanup(); return; }
-      // FRAME GOVERNOR: on a loaded PC this redraw can starve the whole webview (it went "unresponsive" and the window
-      // came up blank). When a frame costs more than ~20ms, draw less often so the rest of the app keeps its share,
-      // and past ~40ms also fall back to 1x resolution.   shortcut: fixed thresholds, tune if a real GPU still stutters.
-      if (state.gap && now - state.last < state.gap) { state.raf = requestAnimationFrame(loop); return; }
       const dt = Math.min(0.05, state.last ? (now - state.last) / 1000 : 0.016);
       state.last = now;
       if (host.offsetParent !== null || document.fullscreenElement === wrap) {
@@ -1050,12 +1059,7 @@ const SecondBrain = (() => {
         }
         if (state.autoRotate && !state.drag && now - state.lastInput > 2600) c.yaw += dt * 0.11;
         if (state.replay) stepReplay(dt);
-        const t0 = performance.now();
         draw(dt);
-        const cost = performance.now() - t0;
-        state.cost = state.cost ? state.cost * 0.7 + cost * 0.3 : cost;
-        state.gap = Math.max(80, Math.min(250, Math.round(state.cost * 3)));   // ~30fps while cheap, backs off when slow
-        if (state.cost > 40 && !state.slow) { state.slow = true; fit(); }
       }
       state.raf = requestAnimationFrame(loop);
     }
@@ -1609,127 +1613,6 @@ const SecondBrain = (() => {
   };
 })();
 
-
-/* LITE second brain, built for a busy PC with no graphics card. Everything that never moves (the brain's shape, its
-   soft glow, the links) is painted ONCE into a 384x240 picture; each frame only stamps ~200 pre-made glowing dots on
-   top, 8 times a second, then the browser stretches it smoothly to the window. No 3D, no per-frame gradients.
-   shortcut: fixed 2D map, no click-to-inspect; the full 3D view (SecondBrain.mount) is still in this file. */
-function secondBrainLite(body) {
-  const S = 3, W = 128 * S, H = 80 * S, T = SecondBrain._anatomy.TEAMS, teamOf = SecondBrain._anatomy.teamOf;
-  body.innerHTML = '';
-  body.style.cssText += ';position:relative;display:flex;flex-direction:column;background:#03060d;color:#8fc8ff;font:12px monospace;overflow:hidden';
-  const head = document.createElement('div'); head.style.cssText = 'padding:8px 12px;flex:none;letter-spacing:.08em'; head.textContent = 'SECOND BRAIN · reading notebooks…';
-  const stage = document.createElement('div'); stage.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;justify-content:center';
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  cv.style.cssText = 'height:100%;max-width:100%;aspect-ratio:8/5';
-  const legend = document.createElement('div'); legend.style.cssText = 'padding:6px 12px 22px;flex:none;display:flex;flex-wrap:wrap;gap:4px 14px';
-  stage.appendChild(cv); body.append(head, stage, legend);
-  const ctx = cv.getContext('2d', { willReadFrequently: true });
-  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
-  const base = mk(W, H);
-  const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return (h >>> 0) / 4294967296; };
-  // brain = big ellipse (cerebrum) + small one (cerebellum), in the 128x80 map space
-  const inBrain = (x, y) => { const a = (x - 64) / 54, b = (y - 36) / 33, c = (x - 30) / 14, d = (y - 66) / 9; return a * a + b * b <= 0.86 || c * c + d * d <= 0.8; };
-  const sprites = {};   // one soft glowing dot per colour, drawn once
-  function sprite(color, r) {
-    const k = color + r; if (sprites[k]) return sprites[k];
-    const c = mk(r * 4, r * 4), g = c.getContext('2d', { willReadFrequently: true });
-    const gr = g.createRadialGradient(r * 2, r * 2, 0, r * 2, r * 2, r * 2);
-    gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.18, color); gr.addColorStop(0.45, color + '55'); gr.addColorStop(1, color + '00');
-    g.fillStyle = gr; g.fillRect(0, 0, r * 4, r * 4);
-    return (sprites[k] = c);
-  }
-  function paintBase(links) {
-    const g = base.getContext('2d', { willReadFrequently: true });
-    const bg = g.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, W * 0.6);
-    bg.addColorStop(0, '#0b1430'); bg.addColorStop(1, '#02040a'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    let st = 99; const sr = () => (st = (st * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 120; i++) { g.fillStyle = 'rgba(200,225,255,' + (0.1 + sr() * 0.4).toFixed(2) + ')'; g.fillRect(sr() * W, sr() * H, 1, 1); }
-    // the brain: soft body + a lit rim of small dots, like the 3D view's point-cloud shell
-    g.save(); g.beginPath(); g.ellipse(64 * S, 36 * S, 54 * S * 0.93, 33 * S * 0.93, 0, 0, 6.283); g.ellipse(30 * S, 66 * S, 14 * S * 0.9, 9 * S * 0.9, 0, 0, 6.283);
-    const body2 = g.createRadialGradient(64 * S, 34 * S, 4 * S, 64 * S, 36 * S, 56 * S);
-    body2.addColorStop(0, 'rgba(70,110,200,.28)'); body2.addColorStop(1, 'rgba(25,45,100,.12)'); g.fillStyle = body2; g.fill(); g.restore();
-    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 1400; i++) {   // shell dots: denser and brighter toward the edge
-      const x = rnd() * 128, y = rnd() * 80;
-      if (!inBrain(x, y)) continue;
-      const a = (x - 64) / 54, b = (y - 36) / 33, e = Math.min(1, Math.sqrt(a * a + b * b) / 0.93);
-      g.fillStyle = 'rgba(143,200,255,' + (0.05 + Math.pow(e, 3) * 0.55).toFixed(3) + ')';
-      g.fillRect(x * S, y * S, 1.4, 1.4);
-    }
-    g.strokeStyle = 'rgba(120,170,255,.35)'; g.lineWidth = 1; g.setLineDash([2, 3]);
-    g.beginPath(); g.moveTo(64 * S, 6 * S); g.quadraticCurveTo(60 * S, 36 * S, 64 * S, 66 * S); g.stroke(); g.setLineDash([]);   // the fissure
-    g.globalCompositeOperation = 'lighter'; g.lineWidth = 0.8;
-    for (const [a, b] of links) {
-      g.strokeStyle = a.c + '30'; g.beginPath(); g.moveTo(a.x * S, a.y * S);
-      g.quadraticCurveTo((a.x + b.x) / 2 * S, ((a.y + b.y) / 2 - 4) * S, b.x * S, b.y * S); g.stroke();
-    }
-    g.globalCompositeOperation = 'source-over';
-  }
-  let dots = [], tick = 0, timer = 0;
-  // The station scene behind this window (world.js, with its WebGL curve pass) was what ate the CPU on a PC with no
-  // graphics card: profiled at ~90% of a slowed CPU with the brain closed. While the brain is on screen the station only
-  // needs to tick, so drop it to 1 frame a second; give it back the moment the brain closes or is minimised.
-  let capped = false;
-  const capStation = on => {
-    if (on === capped) return; capped = on;
-    try { if (typeof World !== 'undefined' && World.setFrameCap) World.setFrameCap(on ? 1000 : 0); } catch (_) {}
-  };
-  function frame() {
-    if (!body.isConnected) { clearInterval(timer); capStation(false); return; }
-    if (body.offsetParent === null) { capStation(false); return; }   // window hidden: skip the work, station back to normal
-    capStation(true);
-    tick++;
-    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
-    ctx.globalCompositeOperation = 'lighter';
-    for (const d of dots) {
-      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(tick * 0.35 + d.ph);
-      const sp = d.sp, r = sp.width / 2;
-      ctx.drawImage(sp, d.x * S - r, d.y * S - r);
-    }
-    // one travelling spark per frame along a random link: the brain "thinking"
-    if (links.length) {
-      const L = links[(tick >> 3) % links.length], f = (tick % 8) / 8, a = L[0], b = L[1];
-      ctx.globalAlpha = 1; const sp = sprite('#ffffff', 3);
-      ctx.drawImage(sp, (a.x + (b.x - a.x) * f) * S - 6, (a.y + (b.y - a.y) * f - 4 * Math.sin(f * 3.14)) * S - 6);
-    }
-    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-  }
-  let links = [];
-  async function load() {
-    try {
-      const api = typeof Harness !== 'undefined' && Harness.api;
-      const res = api ? await api.get('/api/secondbrain/graph') : await (await fetch('/api/secondbrain/graph')).json();
-      const nodes = (res && res.graph && res.graph.nodes) || [], edges = (res && res.graph && res.graph.edges) || [];
-      const byId = {}, counts = {};
-      for (const n of nodes.slice(0, 400)) {
-        if (n.type === 'concept') continue;
-        const team = n.type === 'knowledge' ? null : teamOf(n.agentId, n.label), tm = team ? T[team] : null;
-        const ax = tm ? tm.anchor[0] : -0.64, ay = tm ? tm.anchor[1] : -0.5, sp = tm ? tm.spread : 0.1;
-        const r = n.type === 'agent' ? 0 : Math.max(0.14, sp) * 1.7 * (0.25 + hash(n.id + 'r')), an = hash(n.id + 'a') * 6.283;
-        let x = 64 + (ax + Math.cos(an) * r) * 46, y = 36 - (ay + Math.sin(an) * r) * 40;
-        for (let k = 0; k < 10 && !inBrain(x, y); k++) { x = 64 + (x - 64) * 0.9; y = 36 + (y - 36) * 0.9; }
-        const c = tm ? tm.color : '#7c7bff', agent = n.type === 'agent';
-        byId[n.id] = { x, y, c, ph: hash(n.id) * 6.283, sp: sprite(c, agent ? 5 : 2) };
-        const k = team || 'knowledge'; counts[k] = (counts[k] || 0) + 1;
-      }
-      dots = Object.values(byId);
-      links = [];
-      for (const e of edges) { if (links.length >= 220) break; const a = byId[e.source], b = byId[e.target]; if (a && b && (a.x !== b.x || a.y !== b.y)) links.push([a, b]); }
-      paintBase(links);
-      head.textContent = 'SECOND BRAIN · ' + dots.length + ' memories & agents · ' + links.length + ' links';
-      legend.innerHTML = '';
-      for (const k of Object.keys(counts)) {
-        const chip = document.createElement('span'); chip.style.color = k === 'knowledge' ? '#7c7bff' : T[k].color;
-        chip.textContent = '● ' + (k === 'knowledge' ? 'KNOWLEDGE' : T[k].label) + ' ' + counts[k]; legend.appendChild(chip);
-      }
-      frame();
-    } catch (e) { head.textContent = 'SECOND BRAIN · could not read notebooks (' + String(e && e.message || e).slice(0, 120) + ')'; }
-  }
-  timer = setInterval(frame, 125);
-  load();
-}
-
 /* The station-wide door. A per-agent brain lives in the dossier (MEMORY already answers "what does THIS agent
    know"); the second brain answers the other question — "what does the STATION know, and who learned it" — so it
    gets its own window in the CREW dock. It opens WIDE and tall: the brain is the content, not a widget in a pane. */
@@ -1737,19 +1620,14 @@ if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
   StationUI.registerWindow('brain', 'SECOND BRAIN', body => {
     body.classList.add('brain-body');
     if (typeof SecondBrain === 'undefined') { body.innerHTML = '<p class="muted">The second brain view failed to load.</p>'; return; }
-    // A throw here used to leave the window empty with no hint why; say what broke instead.
-    const show = e => {
-      if (!body.isConnected || body.querySelector('.sb-err')) return;
+    // a throw here used to leave the window empty with no hint why: say what broke instead
+    try { SecondBrain.mount(body); }
+    catch (e) {
       const p = document.createElement('pre');
-      p.className = 'sb-err'; p.style.cssText = 'position:absolute;left:0;right:0;top:0;z-index:99;margin:0;white-space:pre-wrap;padding:12px;background:#2a0a10;color:#ffb3c0;user-select:text;max-height:60%;overflow:auto';
+      p.style.cssText = 'margin:0;padding:12px;white-space:pre-wrap;color:#ffb3c0;background:#2a0a10;user-select:text';
       p.textContent = 'The second brain hit an error — ' + String((e && (e.stack || e.message)) || e).slice(0, 1200);
-      body.style.position = 'relative'; body.appendChild(p);
-    };
-    try { secondBrainLite(body); } catch (e) { show(e); }   // the full 3D view (SecondBrain.mount) stays in the file, unused here
-    { const t = document.createElement('div'); t.textContent = 'second brain · smooth-lite v11'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
-    // Anything the first frames throw (the draw loop runs outside mount) lands here too.
-    const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
-    window.addEventListener('error', onErr);
+      body.appendChild(p);
+    }
   }, { wide: true, className: 'brain-win' });
 }
 
