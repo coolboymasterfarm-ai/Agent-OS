@@ -355,7 +355,7 @@ const SecondBrain = (() => {
       loading: true, error: '', sampled: false, warm: 0, alive: true, raf: 0, t: 0, last: 0,
       w: 0, h: 0, dpr: 1, compact: false, panelsAuto: true, teamsPresent: {},
       cam: { yaw: Math.PI * 0.8, pitch: 0.2, zoom: 1, tx: 0, ty: -0.04, tz: 0 },
-      goal: null, autoRotate: !reduced, lastInput: 0, drag: null, pointers: new Map()
+      goal: null, autoRotate: false, lastInput: 0, drag: null, pointers: new Map()
     };
 
     // ---- DOM ----
@@ -641,7 +641,7 @@ const SecondBrain = (() => {
     function fit() {
       const r = wrap.getBoundingClientRect();
       const w = Math.max(320, Math.round(r.width)), h = Math.max(360, Math.round(r.height));
-      const dpr = state.slow ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const dpr = 1;   // shortcut: 1x always, a busy PC could not keep up with 2x; raise when the redraw is cheap
       if (w === state.w && h === state.h && dpr === state.dpr) return;
       state.w = w; state.h = h; state.dpr = dpr;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
@@ -1053,7 +1053,7 @@ const SecondBrain = (() => {
         draw(dt);
         const cost = performance.now() - t0;
         state.cost = state.cost ? state.cost * 0.7 + cost * 0.3 : cost;
-        state.gap = state.cost > 20 ? Math.min(250, Math.round(state.cost * 3)) : 0;
+        state.gap = Math.max(100, Math.min(400, Math.round(state.cost * 4)));   // never above ~10fps
         if (state.cost > 40 && !state.slow) { state.slow = true; fit(); }
       }
       state.raf = requestAnimationFrame(loop);
