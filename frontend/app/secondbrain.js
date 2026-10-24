@@ -1610,51 +1610,83 @@ const SecondBrain = (() => {
 })();
 
 
-/* LITE second brain: the whole view as a 128x80 pixel picture scaled up. No gradients, no glow, no 3D, ~4 frames a
-   second, one tiny canvas. Built for a PC with no GPU: same idea (a brain lit by each team's notebooks), far less work.
-   shortcut: a fixed 2D map and no click-to-inspect, add them back only if the PC can afford it. */
-function secondBrainLite(body, ready) {
-  const W = 128, H = 80, T = SecondBrain._anatomy.TEAMS, teamOf = SecondBrain._anatomy.teamOf;
+/* LITE second brain, built for a busy PC with no graphics card. Everything that never moves (the brain's shape, its
+   soft glow, the links) is painted ONCE into a 384x240 picture; each frame only stamps ~200 pre-made glowing dots on
+   top, 8 times a second, then the browser stretches it smoothly to the window. No 3D, no per-frame gradients.
+   shortcut: fixed 2D map, no click-to-inspect; the full 3D view (SecondBrain.mount) is still in this file. */
+function secondBrainLite(body) {
+  const S = 3, W = 128 * S, H = 80 * S, T = SecondBrain._anatomy.TEAMS, teamOf = SecondBrain._anatomy.teamOf;
   body.innerHTML = '';
-  body.style.cssText += ';position:relative;display:flex;flex-direction:column;background:#04070f;color:#8fc8ff;font:12px monospace;overflow:hidden';
-  const head = document.createElement('div'); head.style.cssText = 'padding:8px 12px;flex:none'; head.textContent = 'SECOND BRAIN · reading notebooks…';
+  body.style.cssText += ';position:relative;display:flex;flex-direction:column;background:#03060d;color:#8fc8ff;font:12px monospace;overflow:hidden';
+  const head = document.createElement('div'); head.style.cssText = 'padding:8px 12px;flex:none;letter-spacing:.08em'; head.textContent = 'SECOND BRAIN · reading notebooks…';
   const stage = document.createElement('div'); stage.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;justify-content:center';
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  cv.style.cssText = 'height:100%;max-width:100%;aspect-ratio:8/5;image-rendering:pixelated;image-rendering:crisp-edges';
-  const legend = document.createElement('div'); legend.style.cssText = 'padding:6px 12px 22px;flex:none;display:flex;flex-wrap:wrap;gap:4px 12px';
+  cv.style.cssText = 'height:100%;max-width:100%;aspect-ratio:8/5';
+  const legend = document.createElement('div'); legend.style.cssText = 'padding:6px 12px 22px;flex:none;display:flex;flex-wrap:wrap;gap:4px 14px';
   stage.appendChild(cv); body.append(head, stage, legend);
   const ctx = cv.getContext('2d', { willReadFrequently: true });
-  const base = document.createElement('canvas'); base.width = W; base.height = H;
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const base = mk(W, H);
   const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return (h >>> 0) / 4294967296; };
-  const inBrain = (x, y) => { const a = (x - 64) / 54, b = (y - 36) / 33; const c = (x - 30) / 14, d = (y - 66) / 9; return a * a + b * b <= 1 || c * c + d * d <= 1; };
-  const inner = (x, y) => inBrain(x - 1, y) && inBrain(x + 1, y) && inBrain(x, y - 1) && inBrain(x, y + 1);
-  function paintBase(dots, links) {
+  // brain = big ellipse (cerebrum) + small one (cerebellum), in the 128x80 map space
+  const inBrain = (x, y) => { const a = (x - 64) / 54, b = (y - 36) / 33, c = (x - 30) / 14, d = (y - 66) / 9; return a * a + b * b <= 0.86 || c * c + d * d <= 0.8; };
+  const sprites = {};   // one soft glowing dot per colour, drawn once
+  function sprite(color, r) {
+    const k = color + r; if (sprites[k]) return sprites[k];
+    const c = mk(r * 4, r * 4), g = c.getContext('2d', { willReadFrequently: true });
+    const gr = g.createRadialGradient(r * 2, r * 2, 0, r * 2, r * 2, r * 2);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.18, color); gr.addColorStop(0.45, color + '55'); gr.addColorStop(1, color + '00');
+    g.fillStyle = gr; g.fillRect(0, 0, r * 4, r * 4);
+    return (sprites[k] = c);
+  }
+  function paintBase(links) {
     const g = base.getContext('2d', { willReadFrequently: true });
-    g.fillStyle = '#04070f'; g.fillRect(0, 0, W, H);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const bg = g.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, W * 0.6);
+    bg.addColorStop(0, '#0b1430'); bg.addColorStop(1, '#02040a'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    let st = 99; const sr = () => (st = (st * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 120; i++) { g.fillStyle = 'rgba(200,225,255,' + (0.1 + sr() * 0.4).toFixed(2) + ')'; g.fillRect(sr() * W, sr() * H, 1, 1); }
+    // the brain: soft body + a lit rim of small dots, like the 3D view's point-cloud shell
+    g.save(); g.beginPath(); g.ellipse(64 * S, 36 * S, 54 * S * 0.93, 33 * S * 0.93, 0, 0, 6.283); g.ellipse(30 * S, 66 * S, 14 * S * 0.9, 9 * S * 0.9, 0, 0, 6.283);
+    const body2 = g.createRadialGradient(64 * S, 34 * S, 4 * S, 64 * S, 36 * S, 56 * S);
+    body2.addColorStop(0, 'rgba(70,110,200,.28)'); body2.addColorStop(1, 'rgba(25,45,100,.12)'); g.fillStyle = body2; g.fill(); g.restore();
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 1400; i++) {   // shell dots: denser and brighter toward the edge
+      const x = rnd() * 128, y = rnd() * 80;
       if (!inBrain(x, y)) continue;
-      g.fillStyle = inner(x, y) ? ((x + y) % 2 ? '#0b1530' : '#09112a') : '#3f6fb0'; g.fillRect(x, y, 1, 1);
+      const a = (x - 64) / 54, b = (y - 36) / 33, e = Math.min(1, Math.sqrt(a * a + b * b) / 0.93);
+      g.fillStyle = 'rgba(143,200,255,' + (0.05 + Math.pow(e, 3) * 0.55).toFixed(3) + ')';
+      g.fillRect(x * S, y * S, 1.4, 1.4);
     }
-    g.fillStyle = '#16264a'; for (let y = 8; y < 62; y += 2) g.fillRect(64, y, 1, 1);   // the fissure
-    g.fillStyle = '#1b2f55';
-    for (const [a, b] of links) {   // one pixel per step along each link, no antialiasing
-      const n = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
-      for (let i = 0; i <= n; i += 2) g.fillRect(Math.round(a.x + (b.x - a.x) * i / n), Math.round(a.y + (b.y - a.y) * i / n), 1, 1);
+    g.strokeStyle = 'rgba(120,170,255,.35)'; g.lineWidth = 1; g.setLineDash([2, 3]);
+    g.beginPath(); g.moveTo(64 * S, 6 * S); g.quadraticCurveTo(60 * S, 36 * S, 64 * S, 66 * S); g.stroke(); g.setLineDash([]);   // the fissure
+    g.globalCompositeOperation = 'lighter'; g.lineWidth = 0.8;
+    for (const [a, b] of links) {
+      g.strokeStyle = a.c + '30'; g.beginPath(); g.moveTo(a.x * S, a.y * S);
+      g.quadraticCurveTo((a.x + b.x) / 2 * S, ((a.y + b.y) / 2 - 4) * S, b.x * S, b.y * S); g.stroke();
     }
+    g.globalCompositeOperation = 'source-over';
   }
   let dots = [], tick = 0, timer = 0;
   function frame() {
     if (!body.isConnected) { clearInterval(timer); return; }
-    if (body.offsetParent === null) return;   // hidden window: do nothing
+    if (body.offsetParent === null) return;   // window hidden: skip the work
     tick++;
-    ctx.drawImage(base, 0, 0);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
+    ctx.globalCompositeOperation = 'lighter';
     for (const d of dots) {
-      const lit = 0.55 + 0.45 * Math.sin(tick * 0.5 + d.ph);
-      ctx.globalAlpha = lit; ctx.fillStyle = d.c; ctx.fillRect(d.x - 1, d.y - 1, d.big ? 3 : 2, d.big ? 3 : 2);
+      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(tick * 0.35 + d.ph);
+      const sp = d.sp, r = sp.width / 2;
+      ctx.drawImage(sp, d.x * S - r, d.y * S - r);
     }
-    ctx.globalAlpha = 1;
-    const sy = (tick * 2) % H; ctx.fillStyle = 'rgba(143,200,255,.12)'; ctx.fillRect(0, sy, W, 1);   // one scan line
+    // one travelling spark per frame along a random link: the brain "thinking"
+    if (links.length) {
+      const L = links[(tick >> 3) % links.length], f = (tick % 8) / 8, a = L[0], b = L[1];
+      ctx.globalAlpha = 1; const sp = sprite('#ffffff', 3);
+      ctx.drawImage(sp, (a.x + (b.x - a.x) * f) * S - 6, (a.y + (b.y - a.y) * f - 4 * Math.sin(f * 3.14)) * S - 6);
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
+  let links = [];
   async function load() {
     try {
       const api = typeof Harness !== 'undefined' && Harness.api;
@@ -1664,24 +1696,25 @@ function secondBrainLite(body, ready) {
       for (const n of nodes.slice(0, 400)) {
         if (n.type === 'concept') continue;
         const team = n.type === 'knowledge' ? null : teamOf(n.agentId, n.label), tm = team ? T[team] : null;
-        const ax = tm ? tm.anchor[0] : -0.64, ay = tm ? tm.anchor[1] : -0.5, sp = tm ? Math.max(0.08, tm.spread) : 0.1;
-        const r = n.type === "agent" ? 0 : Math.max(0.14, sp) * 1.7 * (0.25 + hash(n.id + "r")), an = hash(n.id + 'a') * 6.283;
-        let x = Math.round(64 + (ax + Math.cos(an) * r) * 46), y = Math.round(36 - (ay + Math.sin(an) * r) * 40);
-        for (let k = 0; k < 8 && !inner(x, y); k++) { x = Math.round(64 + (x - 64) * 0.9); y = Math.round(36 + (y - 36) * 0.9); }
-        const c = tm ? tm.color : '#7c7bff';
-        byId[n.id] = { x, y, c, big: n.type === 'agent', ph: hash(n.id) * 6.283 };
+        const ax = tm ? tm.anchor[0] : -0.64, ay = tm ? tm.anchor[1] : -0.5, sp = tm ? tm.spread : 0.1;
+        const r = n.type === 'agent' ? 0 : Math.max(0.14, sp) * 1.7 * (0.25 + hash(n.id + 'r')), an = hash(n.id + 'a') * 6.283;
+        let x = 64 + (ax + Math.cos(an) * r) * 46, y = 36 - (ay + Math.sin(an) * r) * 40;
+        for (let k = 0; k < 10 && !inBrain(x, y); k++) { x = 64 + (x - 64) * 0.9; y = 36 + (y - 36) * 0.9; }
+        const c = tm ? tm.color : '#7c7bff', agent = n.type === 'agent';
+        byId[n.id] = { x, y, c, ph: hash(n.id) * 6.283, sp: sprite(c, agent ? 5 : 2) };
         const k = team || 'knowledge'; counts[k] = (counts[k] || 0) + 1;
       }
       dots = Object.values(byId);
-      const links = []; for (const e of edges) { if (links.length >= 200) break; const a = byId[e.source], b = byId[e.target]; if (a && b && (a.x !== b.x || a.y !== b.y)) links.push([a, b]); }
-      paintBase(dots, links);
-      head.textContent = 'SECOND BRAIN · ' + dots.length + ' points · ' + links.length + ' links';
+      links = [];
+      for (const e of edges) { if (links.length >= 220) break; const a = byId[e.source], b = byId[e.target]; if (a && b && (a.x !== b.x || a.y !== b.y)) links.push([a, b]); }
+      paintBase(links);
+      head.textContent = 'SECOND BRAIN · ' + dots.length + ' memories & agents · ' + links.length + ' links';
       legend.innerHTML = '';
       for (const k of Object.keys(counts)) {
         const chip = document.createElement('span'); chip.style.color = k === 'knowledge' ? '#7c7bff' : T[k].color;
-        chip.textContent = '■ ' + (k === 'knowledge' ? 'KNOWLEDGE' : T[k].label) + ' ' + counts[k]; legend.appendChild(chip);
+        chip.textContent = '● ' + (k === 'knowledge' ? 'KNOWLEDGE' : T[k].label) + ' ' + counts[k]; legend.appendChild(chip);
       }
-      frame(); if (!timer) timer = setInterval(frame, 250);
+      frame(); if (!timer) timer = setInterval(frame, 125);
     } catch (e) { head.textContent = 'SECOND BRAIN · could not read notebooks (' + String(e && e.message || e).slice(0, 120) + ')'; }
   }
   load();
@@ -1703,7 +1736,7 @@ if (typeof StationUI !== 'undefined' && StationUI.registerWindow) {
       body.style.position = 'relative'; body.appendChild(p);
     };
     try { secondBrainLite(body); } catch (e) { show(e); }   // the full 3D view (SecondBrain.mount) stays in the file, unused here
-    { const t = document.createElement('div'); t.textContent = 'second brain · pixel v9'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
+    { const t = document.createElement('div'); t.textContent = 'second brain · smooth-lite v10'; t.style.cssText = 'position:absolute;right:8px;bottom:6px;z-index:98;font:10px monospace;color:#8fc8ff;opacity:.6;pointer-events:none'; body.style.position = 'relative'; body.appendChild(t); }   // proves which build is running
     // Anything the first frames throw (the draw loop runs outside mount) lands here too.
     const onErr = ev => { if (!body.isConnected) { window.removeEventListener('error', onErr); return; } show(ev.error || ev.message); };
     window.addEventListener('error', onErr);
